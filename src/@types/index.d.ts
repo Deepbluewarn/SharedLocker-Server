@@ -4,15 +4,12 @@ import passport from 'passport';
 declare global {
   namespace Express {
     interface User {
-        id: string;
-        name: string;
-        email: string;
-        isEmailVerified: boolean;
-        password: string;
-        referral_code: string;
-        referred_by: string;
-        thirdPartyAuth: Array<any>;
-        createdAt: Date;
+      _id: string;
+      name: string;
+      email: string;
+      password: string;
+      createdAt: Date;
+      refreshToken?: string;
     }
   }
   interface IVerifyOptions {
@@ -20,4 +17,4 @@ declare global {
   }
 }
 
-export {};
+export { };
