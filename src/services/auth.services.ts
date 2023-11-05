@@ -1,18 +1,17 @@
-import { VerifyFunction } from 'passport-local';
-import UsersModel from '../models/Users.js';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import userServices from './user.services.js';
 
-const authService = {
+const AuthService = {
     comparePassword: async (password: string, hash: string) => {
         return await bcrypt.compare(password, hash);
     },
     generateToken: (user: Express.User) => {
         const token = jwt.sign(
-            { username: user.email, id: user.id },
+            { username: user.email, id: user._id },
             process.env.JWT_SECRET,
             {
-                expiresIn: "1h",
+                expiresIn: process.env.JWT_EXPIRATION_TIME,
             }
         );
         return token;
@@ -20,10 +19,10 @@ const authService = {
 
     generateRefreshToken: (user: Express.User) => {
         const refreshToken = jwt.sign(
-            { username: user.email, id: user.id },
+            { username: user.email, id: user._id },
             process.env.JWT_SECRET,
             {
-                expiresIn: "30d",
+                expiresIn: process.env.JWT_REFRESH_EXPIRATION_TIME,
             }
         );
         return refreshToken;
@@ -38,6 +37,23 @@ const authService = {
             throw err;
         }
     },
+
+    revokeRefreshToken: async (token: string) => {
+        try {
+            console.log('[authService] revokeRefreshToken token: ', token)
+            const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
+            const user = await userServices.findUserByObjectId(decoded.id);
+
+            if (!user) throw new Error('User not found');
+
+            user.refreshToken = '';
+            user.save();
+
+            return user;
+        } catch (err) {
+            throw err;
+        }
+    },
 }
 
-export default authService;
+export default AuthService;
