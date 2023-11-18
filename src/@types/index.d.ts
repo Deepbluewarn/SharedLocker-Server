@@ -4,7 +4,7 @@ import passport from 'passport';
 declare global {
   namespace Express {
     interface User {
-      _id: string;
+      userId: string;
       name: string;
       email: string;
       password: string;
@@ -12,9 +12,11 @@ declare global {
       refreshToken?: string;
     }
   }
+}
+declare module "passport-local"{
   interface IVerifyOptions {
-    message: any;
+    message: string;
+    success: boolean;
+    token?: any;
   }
 }
-
-export { };

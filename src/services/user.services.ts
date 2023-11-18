@@ -4,18 +4,18 @@ const UserService = {
     findUserByEmail: async (email: string) => {
         return await Users.findOne({ email });
     },
-    findUserByObjectId: async (id: string) => {
-        return await Users.findById(id);
+    findUserByObjectId: async (userId: string) => {
+        return await Users.findOne({userId});
     },
     
     /**
      * 
-     * @param _id email address.
+     * @param userId email address.
      * @param password hashed password.
      * @returns Express.User
      */
-    saveNewUser: async (_id: string, password: string) => {
-        const newUser = new Users({ _id, password });
+    saveNewUser: async (userId: string, password: string) => {
+        const newUser = new Users({ userId, password });
         
         return await newUser.save();
     }
