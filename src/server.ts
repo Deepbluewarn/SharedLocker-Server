@@ -4,6 +4,9 @@ import cookieParser from 'cookie-parser';
 import passport from './services/passport/setup.js';
 import auth from './routes/auth.js';
 import dotenv from 'dotenv';
+import initData from './db/initData.js';
+import lockerRouter from './routes/locker.js';
+import userRouter from './routes/user.js';
 dotenv.config();
 
 const app = express();
@@ -14,6 +17,7 @@ mongoose
 	.connect(MONGO_URL)
 	.then(() => {
 		console.log('Connected to MongoDB');
+		initData();
 	})
 	.catch(err => {
 		console.log(err);
@@ -25,6 +29,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(passport.initialize());
 
 app.use('/auth', auth);
+app.use('/api', lockerRouter);
+app.use('/api', userRouter);
 app.get('/', (req, res) => {
 	res.send('Hello World');
 })
