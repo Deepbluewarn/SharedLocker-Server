@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import passport from "passport";
+import Users, { IUser } from "../models/Users";
 
 type tokenType = 'accessToken' | 'refreshToken';
 
@@ -13,66 +14,66 @@ export const setTokenCookie = (res: Response, type: tokenType, token: string | n
 }
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('register', (err, user, info) => {
+    passport.authenticate('register', (err, user: IUser, info) => {
         if (err) {
             return res.status(400).json({ errors: err });
         }
 
-        if (!user) {
-            return res.status(400).json({ errors: info.message });
+        if(!info.success){
+            return res.status(400).json(info);
         }
-
-        res.status(200).json({success: `registered ${user.id}`});
+        
+        res.status(200).json(info);
     })(req, res, next);
 }
 
 export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('login', (err, user, info) => {
+    passport.authenticate('login', (err, user: IUser, info) => {
         if (err) {
             return res.status(400).json({ errors: err });
         }
 
-        if (!user) {
-            return res.status(400).json({ errors: 'No user found' });
+        if(!info.success){
+            return res.status(400).json(info);
         }
         
-        setTokenCookie(res, 'refreshToken', user.refreshToken);
-        setTokenCookie(res, 'accessToken', info.message);
+        // setTokenCookie(res, 'refreshToken', user.refreshToken);
+        // setTokenCookie(res, 'accessToken', info.message);
 
-        res.status(200).json({success: true, message: `logged in ${user.id}`});
+        res.status(200).json(info);
     })(req, res, next);
 }
 
 export const logoutUser = async (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('logout', (err, user, info) => {
+    passport.authenticate('logout', (err, user: IUser, info) => {
         if (err) {
             return res.status(400).json({ errors: err });
         }
 
-        if (!user) {
-            return res.status(400).json({ errors: info.message });
+        if(!info.success){
+            return res.status(400).json(info);
         }
 
-        res.status(200).json({success: true, message: info.message});
+        res.status(200).json(info);
     })(req, res, next);
 }
 
 export const getUser = async (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('user', (err, user, info) => {
+    passport.authenticate('user', (err, user: IUser, info) => {
         if (err) {
             return res.status(400).json({ errors: err });
         }
 
-        if (!user) {
-            return res.status(400).json({ errors: info.message });
+        if(!info.success){
+            return res.status(400).json(info);
         }
 
-        res.status(200).json({success: true, message: user});
+        res.status(200).json(info);
     })(req, res, next);
 }
 
 export const getNewToken = async (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('token', (err, user, info) => {
+    passport.authenticate('token', (err, user: IUser, info) => {
         if (err) {
             return res.status(400).json({ errors: err });
         }
