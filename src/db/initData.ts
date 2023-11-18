@@ -13,22 +13,22 @@ const initData = async () => {
                         {
                             lockerNumber: 101,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 102,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 103,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 104,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                     ],
                 },
@@ -38,22 +38,22 @@ const initData = async () => {
                         {
                             lockerNumber: 101,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 102,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 103,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 104,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                     ],
                 },
@@ -67,22 +67,22 @@ const initData = async () => {
                         {
                             lockerNumber: 101,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 102,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 103,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                         {
                             lockerNumber: 104,
                             claimedBy: null,
-                            sharedWith: null
+                            sharedWith: []
                         },
                     ],
                 },

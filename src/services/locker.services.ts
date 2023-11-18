@@ -134,11 +134,15 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
 
     const addSharedWithUser = await Lockers.findOneAndUpdate(
         { building: buildingName },
-        { $addToSet: { "floors.$[i].lockers.$[j].sharedWith": sharedWithUser._id } },
+        {
+            $addToSet: {
+                "floors.$[i].lockers.$[j].sharedWith": sharedWithUserId
+            }
+        },
         {
             arrayFilters: [
                 { "i.floorNumber": floorNumber },
-                { "j.lockerNumber": lockerNumber, "j.claimedBy": user_id }
+                { "j.lockerNumber": lockerNumber }
             ],
             new: true
         }

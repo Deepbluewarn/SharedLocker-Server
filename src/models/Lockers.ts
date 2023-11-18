@@ -41,13 +41,11 @@ const LockerSchema = new mongoose.Schema({
                         ref: 'Users',
                         default: null
                     },
-                    sharedWith: [
-                        {
-                            type: ObjectId,
-                            ref: 'Users',
-                            default: null
-                        }
-                    ]
+                    sharedWith: {
+                        type: [ObjectId],
+                        ref: 'Users',
+                        default: []
+                    }
                 }
             ]
         }
