@@ -8,7 +8,7 @@ const AuthService = {
     },
     generateToken: (user: Express.User) => {
         const token = jwt.sign(
-            { username: user.email, id: user._id },
+            { username: user.email, id: user.userId },
             process.env.JWT_SECRET,
             {
                 expiresIn: process.env.JWT_EXPIRATION_TIME,
@@ -19,7 +19,7 @@ const AuthService = {
 
     generateRefreshToken: (user: Express.User) => {
         const refreshToken = jwt.sign(
-            { username: user.email, id: user._id },
+            { username: user.email, id: user.userId },
             process.env.JWT_SECRET,
             {
                 expiresIn: process.env.JWT_REFRESH_EXPIRATION_TIME,
