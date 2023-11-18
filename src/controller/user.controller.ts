@@ -6,8 +6,15 @@ import LockerService from "../services/locker.services.js";
 export const getUsersLocker = async (req, res, next) => {
     passport.authenticate('user', async (err, user: IUser, info) => {
         const objectId: Types.ObjectId = new Types.ObjectId(user._id);
-
         const locker = await LockerService.getUserLockerList(objectId);
+
+        if (err) {
+            return res.status(400).json({ errors: err });
+        }
+
+        if(!info.success){
+            return res.status(400).json(info);
+        }
 
         if (!locker || locker.length === 0) {
             console.log('[getUsersLocker] locker is null');
