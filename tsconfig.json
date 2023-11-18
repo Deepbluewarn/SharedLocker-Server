@@ -6,6 +6,27 @@
         "esModuleInterop": true,
         "rootDir": "src",
         "outDir": "public/dist",
-        "typeRoots": ["node_modules/@types", "src/@types"]
+        // "baseUrl": "./src",
+        // "paths": {
+        //     "@/*": [
+        //         "./*"
+        //     ],
+        //     "@controller/*": [
+        //         "src/controller/*"
+        //     ],
+        //     "@models/*": [
+        //         "src/models/*"
+        //     ],
+        //     "@routes/*": [
+        //         "src/routes/*"
+        //     ],
+        //     "@services/*": [
+        //         "src/services/*"
+        //     ],
+        // },
+        "typeRoots": [
+            "node_modules/@types",
+            "src/@types"
+        ]
     }
 }
