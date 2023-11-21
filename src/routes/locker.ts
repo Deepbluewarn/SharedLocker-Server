@@ -3,7 +3,7 @@ import express from 'express';
 
 const lockerRouter = express.Router();
 
-lockerRouter.get("/locker/buildings", getAllBuildingList);
+lockerRouter.get("/locker/building", getAllBuildingList);
 lockerRouter.get("/locker/floor", getAllFloorByBuildingName);
 lockerRouter.get("/lockers", getLockerList);
 lockerRouter.post("/lockers", claimLocker);
