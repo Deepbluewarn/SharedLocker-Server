@@ -6,7 +6,7 @@ import LockerService from "../services/locker.services.js";
 export const getUsersLocker = async (req, res, next) => {
     passport.authenticate('user', async (err, user: IUser, info) => {
         const objectId: Types.ObjectId = new Types.ObjectId(user._id);
-        const locker = await LockerService.getUserLockerList(objectId);
+        const locker = await LockerService.getUserLockerWithShareUserList(objectId);
 
         if (err) {
             return res.status(400).json({ errors: err });
@@ -15,14 +15,24 @@ export const getUsersLocker = async (req, res, next) => {
         if(!info.success){
             return res.status(400).json(info);
         }
+        
+        return res.status(200).json({ success: true, message: "보관함 검색 완료", locker: locker });
+    })(req, res, next);
+}
 
-        if (!locker || locker.length === 0) {
-            console.log('[getUsersLocker] locker is null');
-            return res.status(400).json({ success: false, message: "사용중인 보관함이 없습니다." });
+export const getUsersSharedLocker = async (req, res, next) => {
+    passport.authenticate('user', async (err, user: IUser, info) => {
+        const objectId: Types.ObjectId = new Types.ObjectId(user._id);
+        const locker = await LockerService.getUserSharedLockerWithShareUserList(objectId);
+
+        if (err) {
+            return res.status(400).json({ errors: err });
         }
-        else {
-            console.log('[getUsersLocker] locker: ', locker);
-            return res.status(200).json({ success: true, message: "사용중인 보관함이 있습니다.", locker: locker });
+
+        if(!info.success){
+            return res.status(400).json(info);
         }
+        
+        return res.status(200).json({ success: true, message: "공유받은 보관함 검색 완료", locker: locker });
     })(req, res, next);
 }

@@ -20,21 +20,155 @@ const getAllFloorListByBuildingName = async (buildingName: string) => {
 }
 
 const getLockerList = async (buildingName: string, floorNumber: number) => {
-    console.log('locker.service getLockerList buildingName: ', buildingName);
-    console.log('locker.service getLockerList floorNumber: ', floorNumber);
+    const lockerList = await Lockers.aggregate([
+        { $match: { building: buildingName } }, // 특정 빌딩에 해당하는 문서 선택
+        { $unwind: '$floors' }, // 배열인 floors 필드를 풀어줌
+        { $match: { 'floors.floorNumber': floorNumber } }, // 특정 층에 해당하는 문서 선택
+        { $unwind: '$floors.lockers' }, // 배열인 lockers 필드를 풀어줌
+        { $group: { _id: '$floors.lockers.lockerNumber' } }, // lockerNumber로 그룹화
+        { $project: { _id: 0, lockerNumber: '$_id' } }, // _id 필드 제거 및 필드 이름 변경
+    ]);
 
-    const building = await Lockers.findOne({ building: buildingName });
-    const floor = building.floors.find(floor => floor.floorNumber === floorNumber);
-
-    return floor.lockers;
+    return lockerList.map(locker => locker.lockerNumber);
 }
 
+/**
+ * 
+ * @param user_id 보관함을 소유한 유저의 _id
+ * @returns 보관함 배열
+ */
 const getUserLockerList = async (user_id: Types.ObjectId) => {
     return await Lockers.aggregate([
         { $unwind: '$floors' },
         { $unwind: '$floors.lockers' },
         { $match: { 'floors.lockers.claimedBy': user_id } },
-        { $project: { _id: 0, building: 1, floorNumber: '$floors.floorNumber', lockerNumber: '$floors.lockers.lockerNumber' } }
+        { $project: { 
+            _id: 0, 
+            building: 1, 
+            floorNumber: '$floors.floorNumber', 
+            lockerNumber: '$floors.lockers.lockerNumber',
+            sharedWith: '$floors.lockers.sharedWith'
+        }}
+    ]);
+}
+
+/**
+ * 
+ * @param user_id 보관함을 소유한 유저의 _id
+ * @returns 소유자 닉네임과 공유자 닉네임이 포함된 보관함 배열
+ */
+const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
+    return await Lockers.aggregate([
+        { $unwind: '$floors' },
+        { $unwind: '$floors.lockers' },
+        { $match: { 'floors.lockers.claimedBy': user_id } },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'floors.lockers.claimedBy',
+                foreignField: '_id',
+                as: 'claimedByUser'
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'floors.lockers.sharedWith',
+                foreignField: '_id',
+                as: 'sharedWithUsers'
+            }
+        },
+        { 
+            $project: { 
+                _id: 0, 
+                building: 1,
+                floorNumber: '$floors.floorNumber',
+                lockerNumber: '$floors.lockers.lockerNumber',
+                claimedBy: { 
+                    $arrayElemAt: [
+                        {
+                            $map: {
+                                input: '$claimedByUser',
+                                as: 'user',
+                                in: {
+                                    username: '$$user.userId',
+                                }
+                            }
+                        }, 
+                        0
+                    ]
+                },
+                sharedWith: {
+                    $map: {
+                        input: '$sharedWithUsers',
+                        as: 'user',
+                        in: {
+                            username: '$$user.userId',
+                        }
+                    }
+                }
+            } 
+        }
+    ]);
+}
+
+/**
+ * 
+ * @param user_id 보관함을 소유한 유저의 _id
+ * @returns 소유자 닉네임과 공유자 닉네임이 포함된 보관함 배열
+ */
+const getUserSharedLockerWithShareUserList = async (user_id: Types.ObjectId) => {
+    return await Lockers.aggregate([
+        { $unwind: '$floors' },
+        { $unwind: '$floors.lockers' },
+        { $match: { 'floors.lockers.sharedWith': user_id } },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'floors.lockers.claimedBy',
+                foreignField: '_id',
+                as: 'claimedByUser'
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'floors.lockers.sharedWith',
+                foreignField: '_id',
+                as: 'sharedWithUsers'
+            }
+        },
+        { 
+            $project: { 
+                _id: 0, 
+                building: 1,
+                floorNumber: '$floors.floorNumber',
+                lockerNumber: '$floors.lockers.lockerNumber',
+                claimedBy: { 
+                    $arrayElemAt: [
+                        {
+                            $map: {
+                                input: '$claimedByUser',
+                                as: 'user',
+                                in: {
+                                    username: '$$user.userId',
+                                }
+                            }
+                        }, 
+                        0
+                    ]
+                },
+                sharedWith: {
+                    $map: {
+                        input: '$sharedWithUsers',
+                        as: 'user',
+                        in: {
+                            username: '$$user.userId',
+                        }
+                    }
+                }
+            } 
+        }
     ]);
 }
 
@@ -68,7 +202,7 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
     }
 
     // 두 번째 호출에서 문서를 업데이트합니다.
-    const updatedLocker = await Lockers.findOneAndUpdate(
+    await Lockers.findOneAndUpdate(
         { building: buildingName },
         { $set: { "floors.$[i].lockers.$[j].claimedBy": user_id } },
         {
@@ -76,11 +210,15 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
                 { "i.floorNumber": floorNumber },
                 { "j.lockerNumber": lockerNumber, "j.claimedBy": null }
             ],
-            new: true
+            new: true,
         }
     );
 
-    return { success: true, message: "보관함이 성공적으로 등록되었습니다.", locker: updatedLocker };
+    return { success: true, message: "보관함이 성공적으로 등록되었습니다.", locker: {
+        building: buildingName,
+        floorNumber: Number(floorNumber),
+        lockerNumber: Number(lockerNumber)
+    } };
 }
 
 /**
@@ -126,11 +264,22 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
     if(!sharedWithUser){
         return { success: false, message: "존재하지 않는 유저입니다." };
     }
+    if(user_id.equals(sharedWithUser._id)){
+        return { success: false, message: "자신에게 보관함을 공유할 수 없습니다." };
+    }
 
     console.log('[shareLocker] sharedWithUser: ', sharedWithUser);
     console.log('[shareLocker] sharedWithUser._id: ', sharedWithUser._id);
 
     const sharedWithUserId = new Types.ObjectId(sharedWithUser._id);
+
+    locker.sharedWith.forEach(sharedWith => {
+        console.log('[shareLocker] 중복 확인 sharedWith: ', sharedWith);
+        console.log('[shareLocker] 중복 확인 sharedWithUserId: ', sharedWithUserId);
+        if(sharedWithUserId.equals(sharedWith)){
+            return { success: false, message: "이미 공유된 유저입니다." };
+        }
+    });
 
     const addSharedWithUser = await Lockers.findOneAndUpdate(
         { building: buildingName },
@@ -144,11 +293,10 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
                 { "i.floorNumber": floorNumber },
                 { "j.lockerNumber": lockerNumber }
             ],
-            new: true
         }
     );
 
-    return { success: true, message: "보관함이 성공적으로 공유되었습니다.", locker: addSharedWithUser };
+    return { success: true, message: "보관함이 성공적으로 공유되었습니다." };
 }
 
 export default {
@@ -156,6 +304,8 @@ export default {
     getAllFloorListByBuildingName,
     getLockerList,
     getUserLockerList,
+    getUserSharedLockerWithShareUserList,
+    getUserLockerWithShareUserList,
     claimLocker,
     shareLocker
 };
