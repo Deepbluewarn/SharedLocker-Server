@@ -52,6 +52,23 @@ const getUserLockerList = async (user_id: Types.ObjectId) => {
     ]);
 }
 
+// 유저가 공유받은 보관함 목록을 가져옵니다.
+const getUserSharedLockerList = async (user_id: Types.ObjectId) => {
+    return await Lockers.aggregate([
+        { $unwind: '$floors' },
+        { $unwind: '$floors.lockers' },
+        { $match: { 'floors.lockers.sharedWith': user_id } },
+        { $project: { 
+            _id: 0, 
+            building: 1, 
+            floorNumber: '$floors.floorNumber', 
+            lockerNumber: '$floors.lockers.lockerNumber',
+            claimedBy: '$floors.lockers.claimedBy'
+        }}
+    ]);
+
+}
+
 /**
  * 
  * @param user_id 보관함을 소유한 유저의 _id
@@ -299,6 +316,32 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
     return { success: true, message: "보관함이 성공적으로 공유되었습니다." };
 }
 
+const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) => {
+    const [claimedLockers, sharedLockers] = await Promise.all([
+        getUserLockerList(user_id),
+        getUserSharedLockerList(user_id)
+    ]);
+
+    const allLockers = [...claimedLockers, ...sharedLockers];
+
+    const locker = allLockers.find(
+        locker => 
+            locker.building === buildingName && 
+            Number(locker.floorNumber) === Number(floorNumber) && 
+            Number(locker.lockerNumber) === Number(lockerNumber)
+    );
+
+    if(!locker){
+        return { success: false, message: "해당 보관함을 찾을 수 없거나 등록되어 있지 않은 보관함입니다." };
+    }
+
+    return { success: true, message: "보관함에 접근할 수 있습니다.", locker: {
+        buildingName: locker.building,
+        floorNumber: Number(locker.floorNumber),
+        lockerNumber: Number(locker.lockerNumber)
+    }};
+}
+
 export default {
     getAllBuildingList,
     getAllFloorListByBuildingName,
@@ -307,5 +350,6 @@ export default {
     getUserSharedLockerWithShareUserList,
     getUserLockerWithShareUserList,
     claimLocker,
-    shareLocker
+    shareLocker,
+    checkLockerAccessByUserId
 };
