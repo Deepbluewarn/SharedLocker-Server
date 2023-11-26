@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import passport from './services/passport/setup.js';
 import auth from './routes/auth.js';
 import dotenv from 'dotenv';
-import initData from './db/initData.js';
+import initData from './db/mongoose_initData.js';
 import lockerRouter from './routes/locker.js';
 import userRouter from './routes/user.js';
 dotenv.config();
