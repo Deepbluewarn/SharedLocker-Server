@@ -1,20 +1,20 @@
-import { Redis } from 'ioredis';
-import dotenv from 'dotenv';
-dotenv.config();
+import { Redis } from 'ioredis'
+import dotenv from 'dotenv'
+dotenv.config()
 
 const qrClientOption = {
-    host: 'localhost',
-    port: 6465, 
-    password: process.env.QR_REDIS_AUTH,
-    db: 0
+  host: 'localhost',
+  port: 6465,
+  password: process.env.QR_REDIS_AUTH,
+  db: 0
 }
 
-export const redisQRClient = new Redis(qrClientOption);
+export const redisQRClient = new Redis(qrClientOption)
 
-redisQRClient.on('connect',() => {
-    console.log('connected to redis for session successfully!');
-});
+redisQRClient.on('connect', () => {
+  console.log('connected to redis for session successfully!')
+})
 
-redisQRClient.on('error',(error) => {
-    console.log('Redis for session connection error ', error);
-});
+redisQRClient.on('error', (error) => {
+  console.log('Redis for session connection error ', error)
+})
