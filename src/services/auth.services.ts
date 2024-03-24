@@ -56,7 +56,7 @@ const AuthService = {
     // redis 에 위 문자열을 키 값으로 하는 유저 아이디와 유효기간으로 구성된 객체를 저장. 유효기간은 30초
     // redis 에 저장된 객체는 30초 후 자동으로 삭제됨\
     // 네트워크 지연 시간을 고려하여 4초 정도를 추가로 더해줌
-    await redisQRClient.set(randomString, userId, 'EX', 34).then(res => {
+    await redisQRClient.set(randomString, userId, 'EX', Number(process.env.QR_EXPIRATION_TIME) + 4).then(res => {
       console.log('[authService] generateQrKey redis res: ', res)
     })
 
