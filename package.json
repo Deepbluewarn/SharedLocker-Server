@@ -1,6 +1,6 @@
 {
   "name": "sharedlocker-server",
-  "description": "동의대학교 캡스톤디자인1 프로젝트.",
+  "description": "스마트 공유 보관함 프로젝트 백엔드 서버",
   "private": true,
   "version": "0.0.0",
   "type": "module",
