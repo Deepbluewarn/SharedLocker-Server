@@ -104,3 +104,35 @@ export const shareLocker = (req: Request, res: Response, next: NextFunction) => 
     }
   })(req, res, next)
 }
+
+// 다른 사용자가 소유한 보관함에 대해 공유를 신청합니다.
+// 신청 유저의 _id를 shareRequested 필드에 추가합니다.
+
+export const requestLockerShare = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('user', async (err, user: IUser, info) => {
+    const objectId: Types.ObjectId = new Types.ObjectId(user._id)
+    const buildingName = req.body.buildingName
+    const floorNumber = req.body.floorNumber
+    const lockerNumber = req.body.lockerNumber
+
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+
+    try {
+      const locker_res = await LockerService.requestLockerShare(objectId, buildingName, floorNumber, lockerNumber)
+
+      if (locker_res.success) {
+        res.status(200).json(locker_res)
+      } else {
+        res.status(400).json(locker_res)
+      }
+    } catch (err) {
+      res.status(500).json(err)
+    }
+  })(req, res, next)
+}

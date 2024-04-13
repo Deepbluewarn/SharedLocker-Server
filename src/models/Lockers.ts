@@ -46,6 +46,11 @@ const LockerSchema = new mongoose.Schema({
             ref: 'Users',
             default: []
           },
+          shareRequested: {
+            type: [ObjectId],
+            ref: 'Users',
+            default: []
+          },
           status: {
             type: String,
             // Empty: 빈 사물함 (Claim 가능), Share_Available: 공유 가능, UnAvailable: 사용 불가, Maintenance: 수리 중

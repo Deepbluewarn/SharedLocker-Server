@@ -328,6 +328,35 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   return { success: true, message: '보관함이 성공적으로 공유되었습니다.' }
 }
 
+const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) => {
+  const lockerList = await getLockerList(buildingName, floorNumber)
+
+  const locker = lockerList.find(
+    locker => Number(locker.lockerNumber) === Number(lockerNumber)
+  )
+
+  if (!locker) {
+    return { success: false, message: '해당 보관함을 찾을 수 없거나 등록되어 있지 않은 보관함입니다.' }
+  }
+
+  await Lockers.findOneAndUpdate(
+    { building: buildingName },
+    {
+      $addToSet: {
+        'floors.$[i].lockers.$[j].shareRequested': user_id
+      }
+    },
+    {
+      arrayFilters: [
+        { 'i.floorNumber': floorNumber },
+        { 'j.lockerNumber': lockerNumber }
+      ]
+    }
+  )
+
+  return { success: true, message: '공유 요청이 완료되었습니다.' }
+}
+
 const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) => {
   const [claimedLockers, sharedLockers] = await Promise.all([
     getUserLockerList(user_id),
@@ -367,5 +396,6 @@ export default {
   getUserLockerWithShareUserList,
   claimLocker,
   shareLocker,
+  requestLockerShare,
   checkLockerAccessByUserId
 }
