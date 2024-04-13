@@ -25,11 +25,11 @@ const getLockerList = async (buildingName: string, floorNumber: number) => {
     { $unwind: '$floors' }, // 배열인 floors 필드를 풀어줌
     { $match: { 'floors.floorNumber': floorNumber } }, // 특정 층에 해당하는 문서 선택
     { $unwind: '$floors.lockers' }, // 배열인 lockers 필드를 풀어줌
-    { $group: { _id: '$floors.lockers.lockerNumber' } }, // lockerNumber로 그룹화
-    { $project: { _id: 0, lockerNumber: '$_id' } } // _id 필드 제거 및 필드 이름 변경
+    { $group: { _id: '$floors.lockers.lockerNumber', status: {$first: '$floors.lockers.status'} }}, // lockerNumber로 그룹화
+    { $project: { _id: 0, lockerNumber: '$_id', status: 1} } // _id 필드 제거 및 필드 이름 변경
   ])
 
-  return lockerList.map(locker => locker.lockerNumber)
+  return lockerList;
 }
 
 /**
@@ -224,7 +224,12 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   // 두 번째 호출에서 문서를 업데이트합니다.
   await Lockers.findOneAndUpdate(
     { building: buildingName },
-    { $set: { 'floors.$[i].lockers.$[j].claimedBy': user_id } },
+    { 
+      $set: { 
+        'floors.$[i].lockers.$[j].claimedBy': user_id, 
+        'floors.$[i].lockers.$[j].status': 'Share_Available'
+      }
+    },
     {
       arrayFilters: [
         { 'i.floorNumber': floorNumber },
