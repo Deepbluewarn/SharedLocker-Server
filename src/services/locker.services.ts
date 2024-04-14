@@ -126,6 +126,13 @@ const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
               username: '$$user.userId'
             }
           }
+        },
+        owned: {
+          $cond: {
+            if: { $eq: ['$floors.lockers.claimedBy', user_id] },
+            then: true,
+            else: false
+          }
         }
       }
     }
@@ -185,6 +192,13 @@ const getUserSharedLockerWithShareUserList = async (user_id: Types.ObjectId) => 
             in: {
               username: '$$user.userId'
             }
+          }
+        },
+        owned: {
+          $cond: {
+            if: { $eq: ['$floors.lockers.claimedBy', user_id] },
+            then: true,
+            else: false
           }
         }
       }
