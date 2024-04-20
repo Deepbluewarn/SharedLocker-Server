@@ -136,3 +136,37 @@ export const requestLockerShare = (req: Request, res: Response, next: NextFuncti
     }
   })(req, res, next)
 }
+
+export const cancelLocker = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('user', async (err, user: IUser, info) => {
+    const objectId: Types.ObjectId = new Types.ObjectId(user._id)
+    const buildingName = req.body.buildingName
+    const floorNumber = req.body.floorNumber
+    const lockerNumber = req.body.lockerNumber
+    const isOwner = req.body.isOwner
+
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+
+    try {
+      let locker_res = null;
+
+      if (isOwner){
+        locker_res = await LockerService.cancelClaimedLocker(objectId, buildingName, floorNumber, lockerNumber)
+      }else {
+        locker_res = await LockerService.cancelSharedLocker(objectId, buildingName, floorNumber, lockerNumber)
+      }
+
+      const httpCode = locker_res.success ? 200 : locker_res.httpCode ? locker_res.httpCode : 400
+
+      res.status(httpCode).json(locker_res)
+    } catch (err) {
+      res.status(500).json(err)
+    }
+  })(req, res, next)
+}

@@ -1,6 +1,7 @@
 import { Types } from 'mongoose'
 import Lockers from '../models/Lockers.js'
 import Users from '../models/Users.js'
+import { IServiceMessage } from '../interfaces/index.js'
 
 const getAllBuildingList = async () => {
   return await Lockers.distinct('building')
@@ -192,7 +193,7 @@ const getUserSharedLockerWithShareUserList = async (user_id: Types.ObjectId) => 
   ])
 }
 
-const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) => {
+const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
   console.log('[updateLocker] user_id: ', user_id)
   console.log('[updateLocker] buildingName: ', buildingName)
   console.log('[updateLocker] floorNumber: ', floorNumber)
@@ -242,10 +243,12 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   return {
     success: true,
     message: '보관함이 성공적으로 등록되었습니다.',
-    locker: {
-      building: buildingName,
-      floorNumber: Number(floorNumber),
-      lockerNumber: Number(lockerNumber)
+    data: {
+      locker: {
+        building: buildingName,
+        floorNumber: Number(floorNumber),
+        lockerNumber: Number(lockerNumber)
+      }
     }
   }
 }
@@ -258,7 +261,7 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
  * @param lockerNumber
  * @param sharedWith 추가하고자 하는 유저의 아이디
  */
-const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number, sharedWith: string) => {
+const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number, sharedWith: string) : Promise<IServiceMessage> => {
   // user_id 가 소유한 보관함 목록을 가져옵니다.
   // 그리고 buildingName, floorNumber, lockerNumber가 일치하는 보관함을 찾습니다.
   // 만약 해당 조건에 맞는 보관함이 있으면 해당 보관함에 sharedWith를 추가합니다.
@@ -328,7 +331,91 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   return { success: true, message: '보관함이 성공적으로 공유되었습니다.' }
 }
 
-const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) => {
+const cancelClaimedLocker = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
+  // 우선 소유중인 보관함인지 공유 받은 보관함인지 확인합니다.
+  // 그리고 해당 보관함을 찾아 claimedBy 필드를 null로 업데이트합니다.
+
+  const claimedLockers = await getUserLockerList(user_id)
+
+  if(claimedLockers.length === 0) {
+    return { success: false, message: '보관함이 존재하지 않습니다.' }
+  }
+
+  const locker = claimedLockers.find(
+    locker =>
+      locker.building === buildingName &&
+            Number(locker.floorNumber) === Number(floorNumber) &&
+            Number(locker.lockerNumber) === Number(lockerNumber)
+  )
+
+  if (!locker) {
+    return { success: false, message: '조건에 맟는 보관함을 찾을 수 없습니다.' }
+  }
+
+  if (locker.sharedWith.length > 0) {
+    return { success: false, message: '공유된 보관함은 취소할 수 없습니다. 대신 소유권을 양도할 수 있습니다.', httpCode: 409}
+  }
+
+  await Lockers.findOneAndUpdate(
+    { building: buildingName },
+    {
+      $set: {
+        'floors.$[i].lockers.$[j].claimedBy': null,
+        'floors.$[i].lockers.$[j].status': 'Empty'
+      }
+    },
+    {
+      arrayFilters: [
+        { 'i.floorNumber': floorNumber },
+        { 'j.lockerNumber': lockerNumber }
+      ]
+    }
+  )
+
+  return { success: true, message: '보관함이 성공적으로 취소되었습니다.' }
+}
+
+const cancelSharedLocker = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
+  // 우선 소유중인 보관함인지 공유 받은 보관함인지 확인합니다.
+  // 그리고 해당 보관함을 찾아 claimedBy 필드를 null로 업데이트합니다.
+
+  const sharedLockers = await getUserSharedLockerList(user_id)
+
+  if(sharedLockers.length === 0) {
+    return { success: false, message: '공유받은 보관함이 존재하지 않습니다.' }
+  }
+
+  const locker = sharedLockers.find(
+    locker =>
+      locker.building === buildingName &&
+            Number(locker.floorNumber) === Number(floorNumber) &&
+            Number(locker.lockerNumber) === Number(lockerNumber)
+  )
+
+  if (!locker) {
+    return { success: false, message: '조건에 맟는 보관함을 찾을 수 없습니다.' }
+  }
+
+  // sharedWith 배열에서 user_id 만 제거합니다.
+  await Lockers.findOneAndUpdate(
+    { building: buildingName },
+    {
+      $pull: {
+        'floors.$[i].lockers.$[j].sharedWith': user_id
+      }
+    },
+    {
+      arrayFilters: [
+        { 'i.floorNumber': floorNumber },
+        { 'j.lockerNumber': lockerNumber }
+      ]
+    }
+  )
+
+  return { success: true, message: '보관함이 성공적으로 취소되었습니다.' }
+}
+
+const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
   const lockerList = await getLockerList(buildingName, floorNumber)
 
   const locker = lockerList.find(
@@ -357,7 +444,7 @@ const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string,
   return { success: true, message: '공유 요청이 완료되었습니다.' }
 }
 
-const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) => {
+const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
   const [claimedLockers, sharedLockers] = await Promise.all([
     getUserLockerList(user_id),
     getUserSharedLockerList(user_id)
@@ -379,10 +466,12 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: 
   return {
     success: true,
     message: '보관함에 접근할 수 있습니다.',
-    locker: {
-      buildingName: locker.building,
-      floorNumber: Number(locker.floorNumber),
-      lockerNumber: Number(locker.lockerNumber)
+    data: {
+      locker: {
+        buildingName: locker.building,
+        floorNumber: Number(locker.floorNumber),
+        lockerNumber: Number(locker.lockerNumber)
+      }
     }
   }
 }
@@ -396,6 +485,8 @@ export default {
   getUserLockerWithShareUserList,
   claimLocker,
   shareLocker,
+  cancelClaimedLocker,
+  cancelSharedLocker,
   requestLockerShare,
   checkLockerAccessByUserId
 }

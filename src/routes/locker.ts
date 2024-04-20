@@ -1,4 +1,4 @@
-import { claimLocker, getAllBuildingList, getAllFloorByBuildingName, getLockerList, requestLockerShare, shareLocker } from '../controller/locker.controller.js'
+import { cancelLocker, claimLocker, getAllBuildingList, getAllFloorByBuildingName, getLockerList, requestLockerShare, shareLocker } from '../controller/locker.controller.js'
 import express from 'express'
 
 const lockerRouter = express.Router()
@@ -11,5 +11,6 @@ lockerRouter.post('/locker', claimLocker)
 // 공유자 추가
 lockerRouter.post('/locker/share', shareLocker)
 lockerRouter.post('/locker/request-share', requestLockerShare)
+lockerRouter.delete('/locker/cancel', cancelLocker)
 
 export default lockerRouter
