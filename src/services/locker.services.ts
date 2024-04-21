@@ -452,6 +452,18 @@ const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string,
     return { success: false, message: '해당 보관함을 찾을 수 없거나 등록되어 있지 않은 보관함입니다.' }
   }
 
+  if (locker.status !== 'Share_Available') {
+    return { success: false, message: '공유가 가능한 보관함이 아닙니다.' }
+  }
+
+  if (locker.claimedBy.equals(user_id)) {
+    return { success: false, message: '자신이 소유한 보관함은 공유할 수 없습니다.' }
+  }
+
+  if (locker.sharedWith.includes(user_id)) {
+    return { success: false, message: '이미 공유된 보관함입니다.' }
+  }
+
   await Lockers.findOneAndUpdate(
     { building: buildingName },
     {
