@@ -213,6 +213,14 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   console.log('[updateLocker] floorNumber: ', floorNumber)
   console.log('[updateLocker] lockerNumber: ', lockerNumber)
 
+  const userClaimedLocker = await Lockers.findOne({
+    'floors.lockers.claimedBy': user_id
+  });
+
+  if (userClaimedLocker) {
+    return { success: false, message: '이미 보관함을 소유하고 있습니다. 보관함은 회원 당 하나만 소유할 수 있습니다.' }
+  }
+
   // 첫 번째 호출에서 원본 문서를 가져옵니다.
   const originalLocker = await Lockers.findOne(
     {
@@ -233,7 +241,11 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
 
   // 원본 문서가 없거나 claimedBy 필드가 null이 아니라면 에러를 발생시킵니다.
   if (!originalLocker) {
-    return { success: false, message: '이미 사용중인 보관함입니다.' }
+    return { success: false, message: '이미 사용중이거나 존재하지 않는 보관함입니다.' }
+  }
+
+  if (originalLocker.floors[0].lockers[0].claimedBy === user_id) {
+    return { success: false, message: '이미 소유중인 보관함입니다.' }
   }
 
   // 두 번째 호출에서 문서를 업데이트합니다.
