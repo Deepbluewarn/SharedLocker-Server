@@ -7,7 +7,6 @@ router.post('/register', registerUser)
 router.post('/login', loginUser)
 router.post('/logout', logoutUser)
 router.post('/token', getNewToken)
-router.get('/user', getUser)
 router.get('/qrkey', getQrKey)
 router.post('/qrkey', checkLockerAccess)
 
