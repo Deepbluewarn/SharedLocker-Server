@@ -145,7 +145,7 @@ passport.use('token',
       // 만약 불일치 한 경우 로그아웃.
 
       // DB 에 RefreshToken 이 없는 경우.
-      if (!user.refreshToken) { done(null, false, { success: false, message: 'Refresh Token 이 없습니다.' }); return }
+      if (user?.refreshToken) { done(null, false, { success: false, message: 'Refresh Token 이 없습니다.' }); return }
 
       const dbRefreshToken = jwt.verify(user.refreshToken, process.env.JWT_SECRET) as JwtPayload
 
