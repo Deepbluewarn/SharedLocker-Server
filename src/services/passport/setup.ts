@@ -113,9 +113,9 @@ passport.use('user',
 
     // 토큰의 정보를 기반으로 가입 여부 확인.
     // 토큰에 해당하는 유저가 있으면 해당 유저의 객체를 반환한다.
-    UserService.findUserByObjectId(jwt_payload.id).then((user) => {
+    UserService.getUserProfile(jwt_payload.id).then((user) => {
       if (user) {
-        done(null, user, { success: true, message: '유저 권한이 확인되었습니다.' })
+        done(null, user, { success: true, message: user })
       } else {
         done(null, false, { success: false, message: '유저를 찾을 수 없습니다.' })
       }
