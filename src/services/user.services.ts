@@ -7,6 +7,9 @@ const UserService = {
   findUserByObjectId: async (userId: string) => {
     return await Users.findOne({ userId })
   },
+  getUserProfile: async (userId: string) => {
+    return await Users.findOne({ userId }, { password: 0, refreshToken: 0, __v: 0, _id: 0 })
+  },
 
   /**
      *
