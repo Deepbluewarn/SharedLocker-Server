@@ -2,7 +2,7 @@ import mongoose, { type Model } from 'mongoose'
 
 export interface IUser extends mongoose.Document {
   userId: string
-  name: string
+  nickname: string
   email: string
   password: string
   createdAt: Date
@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     require: true
   },
-  name: {
+  nickname: {
     type: String
   },
   email: {
