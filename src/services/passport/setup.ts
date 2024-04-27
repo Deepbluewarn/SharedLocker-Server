@@ -71,7 +71,7 @@ passport.use('logout',
 passport.use('register',
   new LocalStrategy({ usernameField: 'id', passReqToCallback: true }, async (req, userId, password, done) => {
     console.log(`[passport register] userId: ${userId}, password: ${password}`)
-    console.log(`[passport register] name: ${req.body.username}, email: ${req.body.email}`)
+    console.log(`[passport register] email: ${req.body.email}, nickname: ${req.body.nickname}`)
 
     // request 객체를 받아서 유저의 이름과 이메일을 받아 saveNewUser 함수로 전달.
 
@@ -83,7 +83,10 @@ passport.use('register',
         } else {
           const hashedPwd = await AuthService.generateNewHashedPassword(password)
           console.log('[passport register] findUserByObjectId hashedPwd: ', hashedPwd)
-          UserService.saveNewUser(userId, hashedPwd)
+          const nickname = req.body.nickname;
+          const email = req.body.email;
+
+          UserService.saveNewUser(userId, hashedPwd, nickname, email)
             .then((user) => {
               console.log('[UserService] saveNewUser newUser: ', user)
               done(null, user, { success: true, message: '성공적으로 가입되었습니다.' })

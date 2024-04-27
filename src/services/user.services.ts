@@ -14,8 +14,8 @@ const UserService = {
      * @param password hashed password.
      * @returns Express.User
      */
-  saveNewUser: async (userId: string, password: string) => {
-    const newUser = new Users({ userId, password })
+  saveNewUser: async (userId: string, password: string, nickname: string, email: string) => {
+    const newUser = new Users({ userId, password, nickname, email })
 
     return await newUser.save()
   }
