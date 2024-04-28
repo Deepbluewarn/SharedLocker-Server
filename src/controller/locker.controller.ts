@@ -9,7 +9,11 @@ export const getAllBuildingList = async (req: Request, res: Response, next: Next
     // MongoDB의 distinct를 사용하여 중복되지 않는 건물 목록을 가져옴
     const buildings = await LockerService.getAllBuildingList()
 
-    res.json(buildings)
+    res.json({
+      success: true,
+      message: '건물 목록을 불러왔습니다.',
+      value: buildings
+    })
   } catch (error) { /* empty */ }
 }
 
@@ -24,7 +28,11 @@ export const getAllFloorByBuildingName = async (req: Request, res: Response, nex
   try {
     const floors = await LockerService.getAllFloorListByBuildingName(buildingName)
 
-    res.json(floors)
+    res.json({
+      success: true,
+      message: '층 목록을 불러왔습니다.',
+      value: floors
+    })
   } catch (err) { /* empty */ }
 }
 export const getLockerList = async (req: Request, res: Response, next: NextFunction) => {
@@ -39,7 +47,11 @@ export const getLockerList = async (req: Request, res: Response, next: NextFunct
   try {
     const lockers = await LockerService.getLockerList(buildingName, floor)
 
-    res.json(lockers)
+    res.json({
+      success: true,
+      message: '보관함 목록을 불러왔습니다.',
+      value: lockers
+    })
   } catch (err) {
 
   }

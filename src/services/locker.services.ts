@@ -269,12 +269,10 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   return {
     success: true,
     message: '보관함이 성공적으로 등록되었습니다.',
-    data: {
-      locker: {
-        building: buildingName,
-        floorNumber: Number(floorNumber),
-        lockerNumber: Number(lockerNumber)
-      }
+    value: {
+      building: buildingName,
+      floorNumber: Number(floorNumber),
+      lockerNumber: Number(lockerNumber)
     }
   }
 }
@@ -504,12 +502,10 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: 
   return {
     success: true,
     message: '보관함에 접근할 수 있습니다.',
-    data: {
-      locker: {
-        buildingName: locker.building,
-        floorNumber: Number(locker.floorNumber),
-        lockerNumber: Number(locker.lockerNumber)
-      }
+    value: {
+      buildingName: locker.building,
+      floorNumber: Number(locker.floorNumber),
+      lockerNumber: Number(locker.lockerNumber)
     }
   }
 }

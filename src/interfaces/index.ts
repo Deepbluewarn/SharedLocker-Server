@@ -6,6 +6,6 @@ export interface IQR {
 export interface IServiceMessage {
     success: boolean
     message: string
-    data?: any
+    value?: any
     httpCode?: number
 }

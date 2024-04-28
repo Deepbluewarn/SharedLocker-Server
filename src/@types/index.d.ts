@@ -18,6 +18,6 @@ declare module 'passport-local'{
   interface IVerifyOptions {
     message: string
     success: boolean
-    token?: any
+    value?: any
   }
 }

@@ -16,7 +16,7 @@ export const getUsersLocker = async (req, res, next) => {
       return res.status(400).json(info)
     }
 
-    return res.status(200).json({ success: true, message: '보관함 검색 완료', locker })
+    return res.status(200).json({ success: true, message: '보관함 검색 완료', value: locker })
   })(req, res, next)
 }
 
@@ -33,6 +33,6 @@ export const getUsersSharedLocker = async (req, res, next) => {
       return res.status(400).json(info)
     }
 
-    return res.status(200).json({ success: true, message: '공유받은 보관함 검색 완료', locker })
+    return res.status(200).json({ success: true, message: '공유받은 보관함 검색 완료', value: locker })
   })(req, res, next)
 }
