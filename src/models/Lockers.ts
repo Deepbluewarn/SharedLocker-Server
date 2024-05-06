@@ -11,6 +11,8 @@ export interface Locker {
   lockerNumber: number
   claimedBy: Types.ObjectId | null
   sharedWith: Types.ObjectId[]
+  shareRequested: Types.ObjectId[]
+  status: 'Empty' | 'Share_Available' | 'Unavailable' | 'Maintenance'
 }
 
 export interface Floor {

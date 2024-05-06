@@ -100,6 +100,14 @@ const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
       }
     },
     {
+      $lookup: {
+        from: 'users',
+        localField: 'floors.lockers.shareRequested',
+        foreignField: '_id',
+        as: 'shareRequestedUsers'
+      }
+    },
+    {
       $project: {
         _id: 0,
         building: 1,
@@ -112,7 +120,7 @@ const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
                 input: '$claimedByUser',
                 as: 'user',
                 in: {
-                  username: '$$user.userId'
+                  nickname: '$$user.userId'
                 }
               }
             },
@@ -124,7 +132,16 @@ const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
             input: '$sharedWithUsers',
             as: 'user',
             in: {
-              username: '$$user.userId'
+              nickname: '$$user.userId'
+            }
+          }
+        },
+        shareRequested: {
+          $map: {
+            input: '$shareRequestedUsers',
+            as: 'user',
+            in: {
+              nickname: '$$user.userId'
             }
           }
         },
@@ -167,6 +184,14 @@ const getUserSharedLockerWithShareUserList = async (user_id: Types.ObjectId) => 
       }
     },
     {
+      $lookup: {
+        from: 'users',
+        localField: 'floors.lockers.shareRequested',
+        foreignField: '_id',
+        as: 'shareRequestedUsers'
+      }
+    },
+    {
       $project: {
         _id: 0,
         building: 1,
@@ -179,7 +204,7 @@ const getUserSharedLockerWithShareUserList = async (user_id: Types.ObjectId) => 
                 input: '$claimedByUser',
                 as: 'user',
                 in: {
-                  username: '$$user.userId'
+                  nickname: '$$user.userId'
                 }
               }
             },
@@ -191,7 +216,16 @@ const getUserSharedLockerWithShareUserList = async (user_id: Types.ObjectId) => 
             input: '$sharedWithUsers',
             as: 'user',
             in: {
-              username: '$$user.userId'
+              nickname: '$$user.userId'
+            }
+          }
+        },
+        shareRequested: {
+          $map: {
+            input: '$shareRequestedUsers',
+            as: 'user',
+            in: {
+              nickname: '$$user.userId'
             }
           }
         },
@@ -342,6 +376,9 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
     {
       $addToSet: {
         'floors.$[i].lockers.$[j].sharedWith': sharedWithUserId
+      },
+      $pull: {
+        'floors.$[i].lockers.$[j].shareRequested': sharedWithUserId
       }
     },
     {
@@ -454,11 +491,11 @@ const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string,
     return { success: false, message: '공유가 가능한 보관함이 아닙니다.' }
   }
 
-  if (locker.claimedBy.equals(user_id)) {
+  if (typeof locker.claimedBy !== 'undefined' && locker.claimedBy.equals(user_id)) {
     return { success: false, message: '자신이 소유한 보관함은 공유할 수 없습니다.' }
   }
 
-  if (locker.sharedWith.includes(user_id)) {
+  if (typeof locker.sharedWith !== 'undefined' && locker.sharedWith.includes(user_id)) {
     return { success: false, message: '이미 공유된 보관함입니다.' }
   }
 
