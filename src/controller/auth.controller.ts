@@ -11,7 +11,7 @@ export const setTokenCookie = (res: Response, type: tokenType, token: string | n
   res.cookie(type === 'accessToken' ? 'Authorization' : 'refreshToken',
     token,
     {
-      domain: '.ngrok-free.app',
+      domain: `.${process.env.API_DOMAIN}`,
       httpOnly: true,
       secure: true,
       sameSite: 'strict'
@@ -42,8 +42,8 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
       return res.status(400).json(info)
     }
 
-    // setTokenCookie(res, 'refreshToken', user.refreshToken);
-    // setTokenCookie(res, 'accessToken', info.message);
+    setTokenCookie(res, 'refreshToken', user.refreshToken);
+    setTokenCookie(res, 'accessToken', info.message);
 
     res.status(200).json(info)
   })(req, res, next)
@@ -86,23 +86,8 @@ export const getNewToken = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json(info)
     }
 
-    res.cookie('refreshToken',
-      info.refreshToken,
-      {
-        domain: '.ngrok-free.app',
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict'
-      })
-
-    res.cookie('Authorization',
-      info.accessToken,
-      {
-        domain: '.ngrok-free.app',
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict'
-      })
+    setTokenCookie(res, 'refreshToken', info.refreshToken);
+    setTokenCookie(res, 'accessToken', info.accessToken);
 
     res.status(200).json(info)
   })(req, res, next)
