@@ -4,7 +4,7 @@ dotenv.config()
 
 const qrClientOption = {
   host: 'localhost',
-  port: 6465,
+  port: process.env.REDIS_PORT as unknown as number,
   password: process.env.QR_REDIS_AUTH,
   db: 0
 }
