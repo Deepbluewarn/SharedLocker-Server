@@ -5,17 +5,15 @@ import AuthService from '../services/auth.services.js'
 import LockerService from '../services/locker.services.js'
 import { Types } from 'mongoose'
 
-type tokenType = 'accessToken' | 'refreshToken'
+// type tokenType = 'accessToken' | 'refreshToken'
 
-export const setTokenCookie = (res: Response, type: tokenType, token: string | null) => {
-  res.cookie(type === 'accessToken' ? 'Authorization' : 'refreshToken',
-    token,
-    {
-      domain: `.${process.env.API_DOMAIN}`,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict'
-    })
+export const setTokenCookie = (res: Response, name: string, token: string | null) => {
+  res.cookie(name, token, {
+    domain: `.${process.env.API_DOMAIN}`,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict'
+  })
 }
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -42,8 +40,8 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
       return res.status(400).json(info)
     }
 
-    setTokenCookie(res, 'refreshToken', user.refreshToken);
-    setTokenCookie(res, 'accessToken', info.message);
+    setTokenCookie(res, process.env.REFRESH_TOKEN_COOKIE_NAME, info.value.refreshToken);
+    setTokenCookie(res, process.env.ACCESS_TOKEN_COOKIE_NAME, info.value.accessToken);
 
     res.status(200).json(info)
   })(req, res, next)
@@ -83,11 +81,17 @@ export const getNewToken = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ errors: err })
     }
     if (!info.success) {
-      return res.status(400).json(info)
+      let message = '오류 발생!'
+
+      if (info instanceof Error) {
+        message = info.message
+      }
+
+      return res.status(400).json({ success: false, message})
     }
 
-    setTokenCookie(res, 'refreshToken', info.refreshToken);
-    setTokenCookie(res, 'accessToken', info.accessToken);
+    setTokenCookie(res, process.env.REFRESH_TOKEN_COOKIE_NAME, info.refreshToken);
+    setTokenCookie(res, process.env.ACCESS_TOKEN_COOKIE_NAME, info.accessToken);
 
     res.status(200).json(info)
   })(req, res, next)

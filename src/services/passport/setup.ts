@@ -46,20 +46,27 @@ passport.use('login',
 passport.use('logout',
   new JwtStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    // jwtFromRequest: (req) => tokenExtractor(req, 'Authorization'),
-    secretOrKey: process.env.JWT_SECRET
-  }, (jwt_payload, done) => {
+    secretOrKey: process.env.JWT_SECRET,
+    passReqToCallback: true
+  }, (req: Request, jwt_payload, done) => {
     console.log('[passport logout] jwt_payload: ', jwt_payload)
+
+    const accessTokenExtractor = ExtractJwt.fromAuthHeaderAsBearerToken();
 
     UserService.findUserByObjectId(jwt_payload.id).then((user) => {
       if (!user) {
         done(null, false, { success: false, message: 'User not found' })
       } else {
-        AuthService.revokeRefreshToken(user.refreshToken).then(user => {
-          done(null, user as Express.User, { success: true, message: `Logged out. user ${user.id}` })
-        }).catch(err => {
-          done(null, user as Express.User, { success: false, message: '오류 발생' })
-        })
+        let refreshRevokePromise = AuthService.revokeRefreshToken(user.refreshToken)
+        let accessRevokePromise = AuthService.revokeAccessToken(accessTokenExtractor(req))
+
+        Promise.all([refreshRevokePromise, accessRevokePromise])
+          .then(([result1, result2]) => {
+            done(null, user as Express.User, { success: true, message: `Logged out. user ${user.id}` })
+          })
+          .catch((error) => {
+            done(null, user as Express.User, { success: false, message: '오류 발생' })
+          });
       }
     })
       .catch(err => {
@@ -135,6 +142,13 @@ passport.use('token',
     passReqToCallback: true
   }, (req: Request, jwt_payload: JwtPayload, done: VerifiedCallback) => {
     console.log('[passport refresh jwt_payload]: ', jwt_payload)
+
+    const jwt_raw = refreshTokenExtractor(req)
+
+    if (AuthService.checkBlackList(jwt_raw)) {
+      done(null, false, { success: false, message: '블랙리스트에 존재하는 토큰입니다.' })
+      return
+    }
 
     if (!jwt_payload) { done(null, false, { success: false, message: '토큰이 존재하지 않습니다.' }); return }
 
