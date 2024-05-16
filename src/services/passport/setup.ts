@@ -93,7 +93,7 @@ passport.use('register',
           const nickname = req.body.nickname;
           const email = req.body.email;
 
-          UserService.saveNewUser(userId, hashedPwd, nickname, email)
+          UserService.saveNewUser(userId, hashedPwd, nickname, email, 'user')
             .then((user) => {
               console.log('[UserService] saveNewUser newUser: ', user)
               done(null, user, { success: true, message: '성공적으로 가입되었습니다.' })
@@ -101,7 +101,7 @@ passport.use('register',
         }
       })
       .catch((err) => {
-        done(null, false, { success: false, message: 'Something went wrong.' })
+        done(err, false, { success: false, message: 'Something went wrong.' })
       })
   })
 )
@@ -128,7 +128,7 @@ passport.use('user',
       }
     }).catch(err => {
       console.log('[passport user]: ', err)
-      done(err, false, { success: false, message: '예상치 못한 오류가 발생하였습니다.' })
+      done(err, false, { success: false, message: err })
     })
   })
 )

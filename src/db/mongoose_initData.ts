@@ -1,7 +1,9 @@
 import Lockers from '../models/Lockers.js'
+import Roles from '../models/Roles.js'
 
 const initData = async () => {
   await Lockers.deleteMany({})
+  await Roles.deleteMany({})
 
   const initialLockers = [
     {
@@ -90,7 +92,23 @@ const initData = async () => {
     }
   ]
 
+  const initialRoles = [
+    {
+      name: '운영 관리자',
+      role: 'operator'
+    },
+    {
+      name: '실무 관리자',
+      role: 'worker'
+    },
+    {
+      name: '사용자',
+      role: 'user'
+    }
+  ]
+
   await Lockers.insertMany(initialLockers)
+  await Roles.insertMany(initialRoles)
 }
 
 export default initData

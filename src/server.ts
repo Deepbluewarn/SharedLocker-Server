@@ -7,6 +7,8 @@ import dotenv from 'dotenv'
 import initData from './db/mongoose_initData.js'
 import lockerRouter from './routes/locker.js'
 import userRouter from './routes/user.js'
+import adminRouter from './routes/admin.js'
+
 dotenv.config()
 
 const app = express()
@@ -31,6 +33,7 @@ app.use(passport.initialize())
 app.use('/auth', auth)
 app.use('/api', lockerRouter)
 app.use('/api', userRouter)
+app.use('/api', adminRouter)
 app.get('/', (req, res) => {
   res.send('Hello World')
 })

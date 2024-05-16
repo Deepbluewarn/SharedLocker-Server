@@ -3,6 +3,7 @@ import jwt, { type JwtPayload } from 'jsonwebtoken'
 import userServices from './user.services.js'
 import { redisQRClient } from '../db/redis_init.js'
 import { IQR } from '../interfaces/index.js'
+import Roles from '../models/Roles.js'
 
 
 const comparePassword = async (password: string, hash: string) => {
@@ -112,6 +113,10 @@ const checkBlackList = async (token: string) => {
   return false
 }
 
+const getRoleList = async () => {
+  return await Roles.find({}, { _id: 0, __v: 0})
+}
+
 
 export default {
   comparePassword,
@@ -123,5 +128,6 @@ export default {
   generateQrKey,
   getUserIdByQrKey,
   setBlackList,
-  checkBlackList
+  checkBlackList,
+  getRoleList
 }
