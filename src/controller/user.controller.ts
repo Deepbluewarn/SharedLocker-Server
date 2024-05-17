@@ -56,15 +56,18 @@ export const updateUserRole = [
   },
   checkUserRole(['operator']),
   async (req: Request, res: Response, next: NextFunction) => {
-    const { userId, role } = req.body
-    const result = await UserService.updateUserRole(userId, role)
+    const { userId, role, assignedLockerBuilding } = req.body
 
-    console.log(result)
-
-    if (!result) {
-      return res.status(400).json({ success: false, message: '사용자 권한 수정에 실패했습니다.' })
+    if(role === 'worker' && !assignedLockerBuilding) {
+      return res.status(400).json({ success: false, message: '담당 보관함이 지정되지 않았습니다.' })
     }
 
-    return res.status(200).json({ success: true, message: '사용자 권한 수정에 성공했습니다.' })
+    try {
+      await UserService.updateUserRole(userId, role, assignedLockerBuilding)
+
+      return res.status(200).json({ success: true, message: '사용자 권한 수정에 성공했습니다.' })
+    } catch (error) {
+      return res.status(400).json({ success: false, message: error.message })
+    }
   }
 ]

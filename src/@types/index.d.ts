@@ -12,6 +12,15 @@ declare global {
       createdAt: Date
       refreshToken?: string
     }
+    interface Request {
+      info: {
+        success: boolean
+        message: any
+      },
+      admin: {
+        role: string
+      }
+    }
   }
 }
 declare module 'passport-local'{
