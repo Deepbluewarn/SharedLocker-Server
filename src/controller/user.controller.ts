@@ -42,7 +42,7 @@ export const getUsersSharedLocker = async (req, res, next) => {
 
 export const updateUserRole = [
   (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('jwt', { session: false }, (err, user: IUser, info) => {
+    passport.authenticate('admin', { session: false }, (err, user: IUser, info) => {
       if (err) {
         return res.status(500).json(info)
       }

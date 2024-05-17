@@ -7,6 +7,7 @@ import { Strategy as JwtStrategy, ExtractJwt, type VerifiedCallback } from 'pass
 import dotenv from 'dotenv'
 import AuthService from '../auth.services.js'
 import UserService from '../user.services.js'
+import AdminService from '../admin.services.js'
 
 dotenv.config()
 
@@ -49,8 +50,6 @@ passport.use('logout',
     secretOrKey: process.env.JWT_SECRET,
     passReqToCallback: true
   }, (req: Request, jwt_payload, done) => {
-    console.log('[passport logout] jwt_payload: ', jwt_payload)
-
     const accessTokenExtractor = ExtractJwt.fromAuthHeaderAsBearerToken();
 
     UserService.findUserByObjectId(jwt_payload.id).then((user) => {
@@ -80,16 +79,12 @@ passport.use('register',
     console.log(`[passport register] userId: ${userId}, password: ${password}`)
     console.log(`[passport register] email: ${req.body.email}, nickname: ${req.body.nickname}`)
 
-    // request 객체를 받아서 유저의 이름과 이메일을 받아 saveNewUser 함수로 전달.
-
     UserService.findUserByObjectId(userId)
       .then(async (user) => {
         console.log('[passport register] findUserByObjectId user: ', user)
         if (user) {
           done(null, false, { success: false, message: 'ID already exists.' })
         } else {
-          const hashedPwd = await AuthService.generateNewHashedPassword(password)
-          console.log('[passport register] findUserByObjectId hashedPwd: ', hashedPwd)
           const nickname = req.body.nickname;
           const email = req.body.email;
 
@@ -132,6 +127,31 @@ passport.use('user',
     })
   })
 )
+
+// Admins Collection에서 User의 ID로 검색하여 권한을 확인하는 전략
+
+passport.use('admin', new JwtStrategy({
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: process.env.JWT_SECRET,
+  passReqToCallback: true
+}, (req: Request, jwt_payload: JwtPayload, done: VerifiedCallback) => {
+  if (!jwt_payload) { done(null, false, { success: false, message: '권한 없음' }); return }
+
+  const user_promise = UserService.findUserByObjectId(jwt_payload.id)
+
+  user_promise.then(user => {
+    if (!user) {
+      done(null, false, { success: false, message: '유저를 찾을 수 없습니다.' })
+    }else {
+      AdminService.findAdminByObjectId(user._id).then(admin => {
+        req.user = user
+        req.admin = admin
+        req.info = { success: true, message: user }
+        done(null, user, { success: true, message: user })
+      })
+    }
+  })
+}))
 
 // Refresh Token 유효성 확인 및 토큰 재발급 전략
 passport.use('token',

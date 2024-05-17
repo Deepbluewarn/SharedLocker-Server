@@ -11,7 +11,7 @@ import authServices from '../services/auth.services.js'
  */
 export const roleList = [
   (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('jwt', { session: false }, (err, user: IUser, info) => {
+    passport.authenticate('admin', { session: false }, (err, user: IUser, info) => {
       if (err) {
         return res.status(500).json(info)
       }
@@ -35,7 +35,7 @@ export const roleList = [
  */
 export const adminAuthority = [
   (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('jwt', { session: false }, (err, user: IUser, info) => {
+    passport.authenticate('admin', { session: false }, (err, user: IUser, info) => {
       if (err) {
         return res.status(500).json(info)
       }
@@ -58,7 +58,7 @@ export const adminAuthority = [
  */
 export const searchUser = [
   (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('jwt', { session: false }, (err, user: IUser, info) => {
+    passport.authenticate('admin', { session: false }, (err, user: IUser, info) => {
       console.log('searchUser err', err)
       console.log('searchUser user', user)
       console.log('searchUser info', info)
@@ -92,7 +92,7 @@ export const searchUser = [
 
 export const getUserInfoByUserId = [
   (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('jwt', { session: false }, (err, user: IUser, info) => {
+    passport.authenticate('admin', { session: false }, (err, user: IUser, info) => {
       if (err) {
         return res.status(500).json(info)
       }
