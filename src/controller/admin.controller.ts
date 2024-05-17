@@ -76,15 +76,19 @@ export const searchUser = [
   },
   checkUserRole(['operator', 'worker']),
   async (req: Request, res: Response, next: NextFunction) => {
-    const { nickname } = req.body
+    const { nickname, userId } = req.body
 
     console.log('nickname', nickname)
 
-    if (!nickname) {
-      return res.status(400).json({ success: false, message: '닉네임을 입력해주세요.' })
+    if (!nickname && !userId) {
+      return res.status(400).json({ success: false, message: '회원 아이디 혹은 닉네임을 입력하세요.' })
     }
 
-    req.info.message = await UserService.findUsersByNickname(nickname)
+    if (userId){
+      req.info.message = await UserService.findUsersByObjectId(userId)
+    } else {
+      req.info.message = await UserService.findUsersByNickname(nickname)
+    }
 
     res.status(200).json(req.info)
   }
