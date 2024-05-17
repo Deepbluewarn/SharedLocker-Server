@@ -17,8 +17,10 @@ const UserService = {
      * @param password hashed password.
      * @returns Express.User
      */
-  saveNewUser: async (userId: string, password: string, nickname: string, email: string, role: string) => {
-    const newUser = new Users({ userId, password, nickname, email, role })
+  createUser: async (userId: string, password: string, nickname: string, email?: string) => {
+    const hashedPwd = await AuthService.generateNewHashedPassword(password)
+
+    const newUser = new Users({ userId, password: hashedPwd, nickname, email })
 
     return await newUser.save()
   },
