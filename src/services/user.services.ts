@@ -51,16 +51,12 @@ const UserService = {
     console.log('updateUserRole userId: ', userId)
     console.log('updateUserRole role: ', role)
     console.log('updateUserRole assignedLockerBuilding: ', assignedLockerBuilding)
-
-    const locker = await Lockers.findOne({ building: assignedLockerBuilding })
-
-    if (!locker) {
-      throw new Error('해당 건물이 존재하지 않습니다.')
-    }
-
+    
     if (role === 'worker' && !assignedLockerBuilding) {
       throw new Error('실무 관리자는 담당 보관함을 지정해야 합니다.')
     }
+
+    const locker = await Lockers.findOne({ building: assignedLockerBuilding })
 
     const user = await Users.findOne({ userId })
 
@@ -77,10 +73,10 @@ const UserService = {
 
     if (!admin && role !== 'user') {
       // 관리자로 등록되지 않음. 새로 등록한다.
-      await Admins.insertMany({ userId: user._id, role, assignedLocker: locker._id })
+      await Admins.insertMany({ userId: user._id, role, assignedLocker: locker?._id })
     } else {
       // 관리자로 등록 됨. 역할을 수정한다.
-      await Admins.updateOne({ userId: user._id }, { role, assignedLocker: locker._id })
+      await Admins.updateOne({ userId: user._id }, { role, assignedLocker: locker?._id })
     }
 
     if (role === 'user') {
