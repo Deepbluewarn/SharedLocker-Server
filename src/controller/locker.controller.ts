@@ -57,6 +57,43 @@ export const getLockerList = async (req: Request, res: Response, next: NextFunct
   }
 }
 
+export const getAllLockerList = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const lockers = await LockerService.getAllLockerList()
+
+    res.json({
+      success: true,
+      message: '보관함 목록을 불러왔습니다.',
+      value: lockers
+    })
+  } catch (err) {
+
+  }
+}
+
+export const getLockerDetail = async (req: Request, res: Response, next: NextFunction) => {
+  const buildingName = req.query.buildingName as string
+  const floor = Number(req.query.floor)
+  const lockerNumber = Number(req.query.lockerNumber)
+
+  if (!buildingName || isNaN(floor) || isNaN(lockerNumber)) {
+    res.status(400).json({ error: 'Invalid query parameters' })
+    return
+  }
+
+  try {
+    const locker = await LockerService.getLockerDetail(buildingName, floor, lockerNumber)
+
+    res.json({
+      success: true,
+      message: '보관함 정보를 불러왔습니다.',
+      value: locker
+    })
+  } catch (err) {
+
+  }
+}
+
 export const claimLocker = async (req: Request, res: Response, next: NextFunction) => {
   const buildingName = req.body.buildingName
   const floorNumber = req.body.floorNumber

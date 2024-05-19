@@ -3,6 +3,11 @@ import Lockers from '../models/Lockers.js'
 import Users from '../models/Users.js'
 import { IServiceMessage } from '../interfaces/index.js'
 
+const USERS_MASK = {
+  _id: 0,
+  __v: 0,
+  refresh_token: 0
+}
 const getAllBuildingList = async () => {
   return await Lockers.distinct('building')
 }
@@ -31,6 +36,83 @@ const getLockerList = async (buildingName: string, floorNumber: number) => {
   ])
 
   return lockerList;
+}
+
+const getAllLockerList = async () => {
+  return await Lockers.aggregate([
+    { $unwind: '$floors' },
+    { $unwind: '$floors.lockers' },
+    {
+      $project: {
+        _id: 0,
+        building: 1,
+        floorNumber: '$floors.floorNumber',
+        lockerNumber: '$floors.lockers.lockerNumber',
+        status: '$floors.lockers.status'
+      }
+    }
+  ])
+}
+
+const getLockerDetail = async (buildingName: string, floorNumber: number, lockerNumber: number) => {
+  return await Lockers.aggregate([
+    { $match: { building: buildingName } },
+    { $unwind: '$floors' },
+    { $match: { 'floors.floorNumber': floorNumber } },
+    { $unwind: '$floors.lockers' },
+    { $match: { 'floors.lockers.lockerNumber': lockerNumber } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'floors.lockers.claimedBy',
+        pipeline: [
+          {
+            $project: USERS_MASK
+          }
+        ],
+        foreignField: '_id',
+        as: 'claimedByUser'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'floors.lockers.sharedWith',
+        pipeline: [
+          {
+            $project: USERS_MASK
+          }
+        ],
+        foreignField: '_id',
+        as: 'sharedWithUsers'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'floors.lockers.shareRequested',
+        pipeline: [
+          {
+            $project: USERS_MASK
+          }
+        ],
+        foreignField: '_id',
+        as: 'shareRequestedUsers'
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        building: 1,
+        floorNumber: '$floors.floorNumber',
+        lockerNumber: '$floors.lockers.lockerNumber',
+        status: '$floors.lockers.status',
+        claimedByUser: 1,
+        sharedWithUsers: 1,
+        shareRequestedUsers: 1,
+      }
+    },
+  ])
 }
 
 /**
@@ -551,6 +633,8 @@ export default {
   getAllBuildingList,
   getAllFloorListByBuildingName,
   getLockerList,
+  getAllLockerList,
+  getLockerDetail,
   getUserLockerList,
   getUserSharedLockerWithShareUserList,
   getUserLockerWithShareUserList,
