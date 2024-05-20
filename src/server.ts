@@ -8,6 +8,7 @@ import initData from './db/mongoose_initData.js'
 import lockerRouter from './routes/locker.js'
 import userRouter from './routes/user.js'
 import adminRouter from './routes/admin.js'
+import './mqtt/index.js'
 
 dotenv.config()
 

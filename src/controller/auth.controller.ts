@@ -110,7 +110,7 @@ export const getQrKey = async (req: Request, res: Response, next: NextFunction) 
     }
 
     const qrKey = await AuthService.generateQrKey(user._id)
-    res.status(200).json({ success: true, message: 'QR키 조회 완료', value: qrKey })
+    res.status(200).json({ success: true, message: 'QR키 생성 완료', value: qrKey })
   })(req, res, next)
 }
 
