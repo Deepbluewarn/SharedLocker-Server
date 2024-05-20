@@ -160,12 +160,13 @@ passport.use('token',
     jwtFromRequest: (req) => refreshTokenExtractor(req),
     secretOrKey: process.env.JWT_SECRET,
     passReqToCallback: true
-  }, (req: Request, jwt_payload: JwtPayload, done: VerifiedCallback) => {
+  }, async (req: Request, jwt_payload: JwtPayload, done: VerifiedCallback) => {
     console.log('[passport refresh jwt_payload]: ', jwt_payload)
 
     const jwt_raw = refreshTokenExtractor(req)
+    const checkBlackList = await AuthService.checkBlackList(jwt_raw)
 
-    if (AuthService.checkBlackList(jwt_raw)) {
+    if (checkBlackList) {
       done(null, false, { success: false, message: '블랙리스트에 존재하는 토큰입니다.' })
       return
     }
