@@ -8,6 +8,49 @@ const USERS_MASK = {
   __v: 0,
   refresh_token: 0
 }
+
+const lookupForClaimedBy = {
+  $lookup: {
+    from: 'users',
+    localField: 'floors.lockers.claimedBy',
+    pipeline: [
+      {
+        $project: USERS_MASK
+      }
+    ],
+    foreignField: '_id',
+    as: 'claimedByUser'
+  }
+}
+
+const lookupForSharedWith = {
+  $lookup: {
+    from: 'users',
+    localField: 'floors.lockers.sharedWith',
+    pipeline: [
+      {
+        $project: USERS_MASK
+      }
+    ],
+    foreignField: '_id',
+    as: 'sharedWithUsers'
+  }
+}
+
+const lookupForShareRequested = {
+  $lookup: {
+    from: 'users',
+    localField: 'floors.lockers.shareRequested',
+    pipeline: [
+      {
+        $project: USERS_MASK
+      }
+    ],
+    foreignField: '_id',
+    as: 'shareRequestedUsers'
+  }
+}
+
 const getAllBuildingList = async () => {
   return await Lockers.distinct('buildingName')
 }
@@ -61,45 +104,9 @@ const getLockerDetail = async (buildingName: string, floorNumber: number, locker
     { $match: { 'floors.floorNumber': floorNumber } },
     { $unwind: '$floors.lockers' },
     { $match: { 'floors.lockers.lockerNumber': lockerNumber } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'floors.lockers.claimedBy',
-        pipeline: [
-          {
-            $project: USERS_MASK
-          }
-        ],
-        foreignField: '_id',
-        as: 'claimedByUser'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'floors.lockers.sharedWith',
-        pipeline: [
-          {
-            $project: USERS_MASK
-          }
-        ],
-        foreignField: '_id',
-        as: 'sharedWithUsers'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'floors.lockers.shareRequested',
-        pipeline: [
-          {
-            $project: USERS_MASK
-          }
-        ],
-        foreignField: '_id',
-        as: 'shareRequestedUsers'
-      }
-    },
+    lookupForClaimedBy,
+    lookupForSharedWith,
+    lookupForShareRequested,
     {
       $project: {
         _id: 0,
@@ -168,30 +175,9 @@ const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
     { $unwind: '$floors' },
     { $unwind: '$floors.lockers' },
     { $match: { 'floors.lockers.claimedBy': user_id } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'floors.lockers.claimedBy',
-        foreignField: '_id',
-        as: 'claimedByUser'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'floors.lockers.sharedWith',
-        foreignField: '_id',
-        as: 'sharedWithUsers'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'floors.lockers.shareRequested',
-        foreignField: '_id',
-        as: 'shareRequestedUsers'
-      }
-    },
+    lookupForClaimedBy,
+    lookupForSharedWith,
+    lookupForShareRequested,
     {
       $project: {
         _id: 0,
@@ -199,38 +185,9 @@ const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
         buildingNumber: 1,
         floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
-        claimedBy: {
-          $arrayElemAt: [
-            {
-              $map: {
-                input: '$claimedByUser',
-                as: 'user',
-                in: {
-                  nickname: '$$user.userId'
-                }
-              }
-            },
-            0
-          ]
-        },
-        sharedWith: {
-          $map: {
-            input: '$sharedWithUsers',
-            as: 'user',
-            in: {
-              nickname: '$$user.userId'
-            }
-          }
-        },
-        shareRequested: {
-          $map: {
-            input: '$shareRequestedUsers',
-            as: 'user',
-            in: {
-              nickname: '$$user.userId'
-            }
-          }
-        },
+        claimedByUser: 1,
+        sharedWithUsers: 1,
+        shareRequestedUsers: 1,
         owned: {
           $cond: {
             if: { $eq: ['$floors.lockers.claimedBy', user_id] },
