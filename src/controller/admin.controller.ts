@@ -85,7 +85,7 @@ export const searchUser = [
     }
 
     if (userId){
-      req.info.message = await UserService.findUsersByObjectId(userId)
+      req.info.message = await UserService.findUserByObjectId(userId)
     } else {
       req.info.message = await UserService.findUsersByNickname(nickname)
     }

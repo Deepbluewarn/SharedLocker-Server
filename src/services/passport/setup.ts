@@ -115,7 +115,7 @@ passport.use('user',
 
     // 토큰의 정보를 기반으로 가입 여부 확인.
     // 토큰에 해당하는 유저가 있으면 해당 유저의 객체를 반환한다.
-    UserService.findUserByObjectId(jwt_payload.id).then((user) => {
+    UserService.findUserByUserId(jwt_payload.id).then((user) => {
       if (user) {
         done(null, user, { success: true, message: user })
       } else {
@@ -181,6 +181,8 @@ passport.use('token',
       // DB 에는 공격자의 RefreshToken 이 저장된다.
       // 정상 유저가 클라이언트에 가지고 있던 RefreshToken 과 DB 의 RT 를 비교해야 한다.
       // 만약 불일치 한 경우 로그아웃.
+
+      if (!user) { done(null, false, { success: false, message: '유저를 찾을 수 없습니다.' }); return }
 
       // DB 에 RefreshToken 이 없는 경우.
       if (!user.refreshToken) { done(null, false, { success: false, message: 'Refresh Token 이 없습니다.' }); return }

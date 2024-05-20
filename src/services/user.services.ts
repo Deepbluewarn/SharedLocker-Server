@@ -3,18 +3,34 @@ import Admins from '../models/Admins.js'
 import Users from '../models/Users.js'
 import Lockers from '../models/Lockers.js'
 
+const ADMIN_MASK = {
+  role: 1,
+}
+
+const lookupForAdmin = {
+  from: 'admins',
+  localField: '_id',
+  pipeline: [{ $project: ADMIN_MASK }],
+  foreignField: 'userId',
+  as: 'admin'
+}
 const UserService = {
-  findUserByEmail: async (email: string) => {
-    return await Users.findOne({ email })
-  },
   findUserByObjectId: async (userId: string) => {
     return await Users.findOne({ userId })
   },
-  findUsersByObjectId: async (userId: string) => {
-    return await Users.find({ userId })
-  },
-  getUserProfile: async (userId: string) => {
-    return await Users.findOne({ userId }, { password: 0, refreshToken: 0, __v: 0, _id: 0 })
+  findUserByUserId: async (userId: string) => {
+    return (await Users.aggregate([
+      { $match: { userId } },
+      { $lookup: lookupForAdmin },
+      { $project: {
+        userId: 1,
+        nickname: 1,
+        email: 1,
+        admin: 1,
+        password: 1,
+        createdAt: 1
+      }}
+    ]))[0]
   },
 
   /**
