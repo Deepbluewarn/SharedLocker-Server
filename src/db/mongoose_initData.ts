@@ -26,7 +26,8 @@ const initData = async () => {
 
   const initialLockers = [
     {
-      building: '정보공학관',
+      buildingNumber: 23,
+      buildingName: '정보공학관',
       floors: [
         {
           floorNumber: 1,
@@ -80,7 +81,8 @@ const initData = async () => {
         }
       ]
     }, {
-      building: '중앙도서관',
+      buildingNumber: 12,
+      buildingName: '중앙도서관',
       floors: [
         {
           floorNumber: 1,

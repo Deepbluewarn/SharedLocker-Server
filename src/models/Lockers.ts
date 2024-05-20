@@ -21,7 +21,12 @@ export interface Floor {
 }
 
 const LockerSchema = new mongoose.Schema({
-  building: {
+  buildingNumber: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+  buildingName: {
     type: String,
     required: true,
     unique: true

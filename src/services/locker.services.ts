@@ -9,14 +9,14 @@ const USERS_MASK = {
   refresh_token: 0
 }
 const getAllBuildingList = async () => {
-  return await Lockers.distinct('building')
+  return await Lockers.distinct('buildingName')
 }
 
 const getAllFloorListByBuildingName = async (buildingName: string) => {
   console.log('locker.service getAllFloorListByBuildingName buildingName: ', buildingName)
 
   const floorsInBuilding = await Lockers.aggregate([
-    { $match: { building: buildingName } }, // 특정 빌딩에 해당하는 문서 선택
+    { $match: { buildingName } }, // 특정 빌딩에 해당하는 문서 선택
     { $unwind: '$floors' }, // 배열인 floors 필드를 풀어줌
     { $group: { _id: '$floors.floorNumber' } }, // floorNumber로 그룹화
     { $project: { _id: 0, floorNumber: '$_id' } } // _id 필드 제거 및 필드 이름 변경
@@ -27,7 +27,7 @@ const getAllFloorListByBuildingName = async (buildingName: string) => {
 
 const getLockerList = async (buildingName: string, floorNumber: number) => {
   const lockerList = await Lockers.aggregate([
-    { $match: { building: buildingName } }, // 특정 빌딩에 해당하는 문서 선택
+    { $match: { buildingName } }, // 특정 빌딩에 해당하는 문서 선택
     { $unwind: '$floors' }, // 배열인 floors 필드를 풀어줌
     { $match: { 'floors.floorNumber': Number(floorNumber) } }, // 특정 층에 해당하는 문서 선택
     { $unwind: '$floors.lockers' }, // 배열인 lockers 필드를 풀어줌
@@ -45,7 +45,7 @@ const getAllLockerList = async () => {
     {
       $project: {
         _id: 0,
-        building: 1,
+        buildingName: 1,
         floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
         status: '$floors.lockers.status'
@@ -56,7 +56,7 @@ const getAllLockerList = async () => {
 
 const getLockerDetail = async (buildingName: string, floorNumber: number, lockerNumber: number) => {
   return await Lockers.aggregate([
-    { $match: { building: buildingName } },
+    { $match: { buildingName } },
     { $unwind: '$floors' },
     { $match: { 'floors.floorNumber': floorNumber } },
     { $unwind: '$floors.lockers' },
@@ -103,7 +103,8 @@ const getLockerDetail = async (buildingName: string, floorNumber: number, locker
     {
       $project: {
         _id: 0,
-        building: 1,
+        buildingName: 1,
+        buildingNumber: 1,
         floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
         status: '$floors.lockers.status',
@@ -128,7 +129,8 @@ const getUserLockerList = async (user_id: Types.ObjectId) => {
     {
       $project: {
         _id: 0,
-        building: 1,
+        buildingName: 1,
+        buildingNumber: 1,
         floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
         sharedWith: '$floors.lockers.sharedWith'
@@ -146,7 +148,8 @@ const getUserSharedLockerList = async (user_id: Types.ObjectId) => {
     {
       $project: {
         _id: 0,
-        building: 1,
+        buildingName: 1,
+        buildingNumber: 1,
         floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
         claimedBy: '$floors.lockers.claimedBy'
@@ -192,7 +195,8 @@ const getUserLockerWithShareUserList = async (user_id: Types.ObjectId) => {
     {
       $project: {
         _id: 0,
-        building: 1,
+        buildingName: 1,
+        buildingNumber: 1,
         floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
         claimedBy: {
@@ -276,7 +280,8 @@ const getUserSharedLockerWithShareUserList = async (user_id: Types.ObjectId) => 
     {
       $project: {
         _id: 0,
-        building: 1,
+        buildingName: 1,
+        buildingNumber: 1,
         floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
         claimedBy: {
@@ -340,7 +345,7 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   // 첫 번째 호출에서 원본 문서를 가져옵니다.
   const originalLocker = await Lockers.findOne(
     {
-      building: buildingName,
+      buildingName: buildingName,
       floors: {
         $elemMatch: {
           floorNumber,
@@ -366,7 +371,7 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
 
   // 두 번째 호출에서 문서를 업데이트합니다.
   await Lockers.findOneAndUpdate(
-    { building: buildingName },
+    { buildingName: buildingName },
     { 
       $set: { 
         'floors.$[i].lockers.$[j].claimedBy': user_id, 
@@ -386,7 +391,7 @@ const claimLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
     success: true,
     message: '보관함이 성공적으로 등록되었습니다.',
     value: {
-      building: buildingName,
+      buildingName: buildingName,
       floorNumber: Number(floorNumber),
       lockerNumber: Number(lockerNumber)
     }
@@ -420,7 +425,7 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
 
   const locker = userLockerList.find(
     locker =>
-      locker.building === buildingName &&
+      locker.buildingName === buildingName &&
             Number(locker.floorNumber) === Number(floorNumber) &&
             Number(locker.lockerNumber) === Number(lockerNumber)
   )
@@ -454,7 +459,7 @@ const shareLocker = async (user_id: Types.ObjectId, buildingName: string, floorN
   })
 
   const addSharedWithUser = await Lockers.findOneAndUpdate(
-    { building: buildingName },
+    { buildingName: buildingName },
     {
       $addToSet: {
         'floors.$[i].lockers.$[j].sharedWith': sharedWithUserId
@@ -486,7 +491,7 @@ const cancelClaimedLocker = async (user_id: Types.ObjectId, buildingName: string
 
   const locker = claimedLockers.find(
     locker =>
-      locker.building === buildingName &&
+      locker.buildingName === buildingName &&
             Number(locker.floorNumber) === Number(floorNumber) &&
             Number(locker.lockerNumber) === Number(lockerNumber)
   )
@@ -500,7 +505,7 @@ const cancelClaimedLocker = async (user_id: Types.ObjectId, buildingName: string
   }
 
   await Lockers.findOneAndUpdate(
-    { building: buildingName },
+    { buildingName: buildingName },
     {
       $set: {
         'floors.$[i].lockers.$[j].claimedBy': null,
@@ -530,7 +535,7 @@ const cancelSharedLocker = async (user_id: Types.ObjectId, buildingName: string,
 
   const locker = sharedLockers.find(
     locker =>
-      locker.building === buildingName &&
+      locker.buildingName === buildingName &&
             Number(locker.floorNumber) === Number(floorNumber) &&
             Number(locker.lockerNumber) === Number(lockerNumber)
   )
@@ -541,7 +546,7 @@ const cancelSharedLocker = async (user_id: Types.ObjectId, buildingName: string,
 
   // sharedWith 배열에서 user_id 만 제거합니다.
   await Lockers.findOneAndUpdate(
-    { building: buildingName },
+    { buildingName: buildingName },
     {
       $pull: {
         'floors.$[i].lockers.$[j].sharedWith': user_id
@@ -582,7 +587,7 @@ const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string,
   }
 
   await Lockers.findOneAndUpdate(
-    { building: buildingName },
+    { buildingName: buildingName },
     {
       $addToSet: {
         'floors.$[i].lockers.$[j].shareRequested': user_id
@@ -599,17 +604,24 @@ const requestLockerShare = async (user_id: Types.ObjectId, buildingName: string,
   return { success: true, message: '공유 요청이 완료되었습니다.' }
 }
 
-const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: string, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
+const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingNumber: number, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
+  console.log('[Locker Service DEBUG] user_id: ', user_id)
+  console.log('[Locker Service DEBUG] buildingNumber: ', buildingNumber)
+  console.log('[Locker Service DEBUG] floorNumber: ', floorNumber)
+  console.log('[Locker Service DEBUG] lockerNumber: ', lockerNumber)
+  
   const [claimedLockers, sharedLockers] = await Promise.all([
     getUserLockerList(user_id),
     getUserSharedLockerList(user_id)
   ])
 
   const allLockers = [...claimedLockers, ...sharedLockers]
+  console.log('[Locker Service DEBUG] allLockers: ', allLockers)
+
 
   const locker = allLockers.find(
     locker =>
-      locker.building === buildingName &&
+      locker.buildingNumber === Number(buildingNumber) &&
             Number(locker.floorNumber) === Number(floorNumber) &&
             Number(locker.lockerNumber) === Number(lockerNumber)
   )
@@ -622,7 +634,7 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingName: 
     success: true,
     message: '보관함에 접근할 수 있습니다.',
     value: {
-      buildingName: locker.building,
+      buildingName: locker.buildingName,
       floorNumber: Number(locker.floorNumber),
       lockerNumber: Number(locker.lockerNumber)
     }

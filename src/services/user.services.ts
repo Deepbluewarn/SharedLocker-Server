@@ -56,7 +56,7 @@ const UserService = {
       throw new Error('실무 관리자는 담당 보관함을 지정해야 합니다.')
     }
 
-    const locker = await Lockers.findOne({ building: assignedLockerBuilding })
+    const locker = await Lockers.findOne({ buildingName: assignedLockerBuilding })
 
     const user = await Users.findOne({ userId })
 
