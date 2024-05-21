@@ -18,15 +18,15 @@ export const getAllBuildingList = async (req: Request, res: Response, next: Next
 }
 
 export const getAllFloorByBuildingName = async (req: Request, res: Response, next: NextFunction) => {
-  const buildingName = req.query.buildingName as string
+  const buildingNumber = Number(req.query.buildingNumber)
 
-  if (!buildingName) {
+  if (!buildingNumber) {
     res.status(400).json({ error: 'Invalid query parameters' })
     return
   }
 
   try {
-    const floors = await LockerService.getAllFloorListByBuildingName(buildingName)
+    const floors = await LockerService.getAllFloorListByBuildingNumber(buildingNumber)
 
     res.json({
       success: true,
@@ -36,16 +36,16 @@ export const getAllFloorByBuildingName = async (req: Request, res: Response, nex
   } catch (err) { /* empty */ }
 }
 export const getLockerList = async (req: Request, res: Response, next: NextFunction) => {
-  const buildingName = req.query.buildingName as string
+  const buildingNumber = Number(req.query.buildingNumber)
   const floor = Number(req.query.floor)
 
-  if (!buildingName || isNaN(floor)) {
+  if (!buildingNumber || isNaN(floor)) {
     res.status(400).json({ error: 'Invalid query parameters' })
     return
   }
 
   try {
-    const lockers = await LockerService.getLockerList(buildingName, floor)
+    const lockers = await LockerService.getLockerList(buildingNumber, floor)
 
     res.json({
       success: true,
@@ -72,17 +72,17 @@ export const getAllLockerList = async (req: Request, res: Response, next: NextFu
 }
 
 export const getLockerDetail = async (req: Request, res: Response, next: NextFunction) => {
-  const buildingName = req.query.buildingName as string
+  const buildingNumber = Number(req.query.buildingNumber)
   const floor = Number(req.query.floor)
   const lockerNumber = Number(req.query.lockerNumber)
 
-  if (!buildingName || isNaN(floor) || isNaN(lockerNumber)) {
+  if (isNaN(buildingNumber) || isNaN(floor) || isNaN(lockerNumber)) {
     res.status(400).json({ error: 'Invalid query parameters' })
     return
   }
 
   try {
-    const locker = await LockerService.getLockerDetail(buildingName, floor, lockerNumber)
+    const locker = await LockerService.getLockerDetail(buildingNumber, floor, lockerNumber, false)
 
     res.json({
       success: true,
@@ -95,14 +95,14 @@ export const getLockerDetail = async (req: Request, res: Response, next: NextFun
 }
 
 export const claimLocker = async (req: Request, res: Response, next: NextFunction) => {
-  const buildingName = req.body.buildingName
+  const buildingNumber = req.body.buildingNumber
   const floorNumber = req.body.floorNumber
   const lockerNumber = req.body.lockerNumber
 
   passport.authenticate('user', async (err, user: IUser, info) => {
     const objectId: Types.ObjectId = new Types.ObjectId(user._id)
 
-    if (err || !buildingName || !floorNumber || !lockerNumber) {
+    if (err || !buildingNumber || !floorNumber || !lockerNumber) {
       return res.status(400).json({ success: false, message: '오류가 발생했습니다.' })
     }
 
@@ -111,7 +111,7 @@ export const claimLocker = async (req: Request, res: Response, next: NextFunctio
     }
 
     try {
-      const locker_res = await LockerService.claimLocker(objectId, buildingName, floorNumber, lockerNumber)
+      const locker_res = await LockerService.claimLocker(objectId, buildingNumber, floorNumber, lockerNumber)
 
       if (locker_res.success) {
         res.status(200).json(locker_res)
@@ -127,7 +127,7 @@ export const claimLocker = async (req: Request, res: Response, next: NextFunctio
 export const shareLocker = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('user', async (err, user: IUser, info) => {
     const objectId: Types.ObjectId = new Types.ObjectId(user._id)
-    const buildingName = req.body.buildingName
+    const buildingNumber = req.body.buildingNumber
     const floorNumber = req.body.floorNumber
     const lockerNumber = req.body.lockerNumber
     const sharedWith = req.body.sharedWith
@@ -141,7 +141,7 @@ export const shareLocker = (req: Request, res: Response, next: NextFunction) => 
     }
 
     try {
-      const locker_res = await LockerService.shareLocker(objectId, buildingName, floorNumber, lockerNumber, sharedWith)
+      const locker_res = await LockerService.shareLocker(objectId, buildingNumber, floorNumber, lockerNumber, sharedWith)
 
       if (locker_res.success) {
         res.status(200).json(locker_res)
@@ -160,7 +160,7 @@ export const shareLocker = (req: Request, res: Response, next: NextFunction) => 
 export const requestLockerShare = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('user', async (err, user: IUser, info) => {
     const objectId: Types.ObjectId = new Types.ObjectId(user._id)
-    const buildingName = req.body.buildingName
+    const buildingNumber = req.body.buildingNumber
     const floorNumber = req.body.floorNumber
     const lockerNumber = req.body.lockerNumber
 
@@ -173,7 +173,7 @@ export const requestLockerShare = (req: Request, res: Response, next: NextFuncti
     }
 
     try {
-      const locker_res = await LockerService.requestLockerShare(objectId, buildingName, floorNumber, lockerNumber)
+      const locker_res = await LockerService.requestLockerShare(objectId, buildingNumber, floorNumber, lockerNumber)
 
       if (locker_res.success) {
         res.status(200).json(locker_res)
@@ -189,7 +189,7 @@ export const requestLockerShare = (req: Request, res: Response, next: NextFuncti
 export const cancelLocker = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('user', async (err, user: IUser, info) => {
     const objectId: Types.ObjectId = new Types.ObjectId(user._id)
-    const buildingName = req.body.buildingName
+    const buildingNumber = req.body.buildingNumber
     const floorNumber = req.body.floorNumber
     const lockerNumber = req.body.lockerNumber
     const isOwner = req.body.isOwner
@@ -206,9 +206,9 @@ export const cancelLocker = (req: Request, res: Response, next: NextFunction) =>
       let locker_res = null;
 
       if (isOwner){
-        locker_res = await LockerService.cancelClaimedLocker(objectId, buildingName, floorNumber, lockerNumber)
+        locker_res = await LockerService.cancelClaimedLocker(objectId, buildingNumber, floorNumber, lockerNumber)
       }else {
-        locker_res = await LockerService.cancelSharedLocker(objectId, buildingName, floorNumber, lockerNumber)
+        locker_res = await LockerService.cancelSharedLocker(objectId, buildingNumber, floorNumber, lockerNumber)
       }
 
       const httpCode = locker_res.success ? 200 : locker_res.httpCode ? locker_res.httpCode : 400

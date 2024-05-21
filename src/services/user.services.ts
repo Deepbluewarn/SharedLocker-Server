@@ -57,22 +57,22 @@ const UserService = {
    * 
    * @param userId 
    * @param role 
-   * @param buildingName 
+   * @param assignedLockerBuildingNumber 
    * @returns 
    */
-  updateUserRole: async (userId: string, role: string, assignedLockerBuilding: string) => {
+  updateUserRole: async (userId: string, role: string, assignedLockerBuildingNumber: string) => {
     // userId 는 유저가 지정한 아이디이고, Admins 컬렉션에서 요구하는 userId는 Users 컬렉션의 _id 이다.
     // 따라서 우선 Users 컬렉션에서 userId를 찾아서 _id를 가져와야 한다.
 
     console.log('updateUserRole userId: ', userId)
     console.log('updateUserRole role: ', role)
-    console.log('updateUserRole assignedLockerBuilding: ', assignedLockerBuilding)
+    console.log('updateUserRole assignedLockerBuildingNumber: ', assignedLockerBuildingNumber)
     
-    if (role === 'worker' && !assignedLockerBuilding) {
+    if (role === 'worker' && !assignedLockerBuildingNumber) {
       throw new Error('실무 관리자는 담당 보관함을 지정해야 합니다.')
     }
 
-    const locker = await Lockers.findOne({ buildingName: assignedLockerBuilding })
+    const locker = await Lockers.findOne({ buildingNumber: assignedLockerBuildingNumber })
 
     const user = await Users.findOne({ userId })
 

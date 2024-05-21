@@ -3,7 +3,8 @@ import mongoose, { type Model, Schema, type Types } from 'mongoose'
 const { Types: { ObjectId } } = Schema // ObjectId 타입은 따로 꺼내주어야 한다.
 
 export interface ILocker extends mongoose.Document {
-  building: string
+  buildingName: string,
+  buildingNumber: number,
   floors: Floor[]
 }
 

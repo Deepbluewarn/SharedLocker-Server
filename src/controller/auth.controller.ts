@@ -116,8 +116,7 @@ export const getQrKey = async (req: Request, res: Response, next: NextFunction) 
 
 export const checkLockerAccess = async (req: Request, res: Response, next: NextFunction) => {
   // body 안에 있는 userid, buildingid 를 가져옴
-  const { qrKey, buildingName, floorNumber, lockerNumber } = req.body
-  console.log('[authController] checkLockerAccess: ', 'buildingName: ', buildingName, 'floorNumber: ', floorNumber, 'lockerNumber: ', lockerNumber)
+  const { qrKey, buildingNumber, floorNumber, lockerNumber } = req.body
   const redisUserId = await AuthService.getUserIdByQrKey(qrKey)
 
   if (!redisUserId) {
@@ -128,7 +127,7 @@ export const checkLockerAccess = async (req: Request, res: Response, next: NextF
   // mongoose userid 생성
   const userId = new Types.ObjectId(redisUserId)
 
-  const access = await LockerService.checkLockerAccessByUserId(userId, buildingName, floorNumber, lockerNumber)
+  const access = await LockerService.checkLockerAccessByUserId(userId, buildingNumber, floorNumber, lockerNumber)
 
   if (access.success) {
     res.status(200).json(access)
