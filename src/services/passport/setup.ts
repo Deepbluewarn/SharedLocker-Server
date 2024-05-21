@@ -143,7 +143,7 @@ passport.use('admin', new JwtStrategy({
     if (!user) {
       done(null, false, { success: false, message: '유저를 찾을 수 없습니다.' })
     }else {
-      AdminService.findAdminByObjectId(user._id).then(admin => {
+      AdminService.findAdminByUserObjectId(user._id).then(admin => {
         req.user = user
         req.admin = admin
         req.info = { success: true, message: user }

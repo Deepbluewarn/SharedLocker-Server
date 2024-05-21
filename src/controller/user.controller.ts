@@ -9,7 +9,7 @@ import { checkUserRole } from '../middlewares/role.js'
 export const getUsersLocker = async (req, res, next) => {
   passport.authenticate('user', async (err, user: IUser, info) => {
     const objectId: Types.ObjectId = new Types.ObjectId(user._id)
-    const locker = await LockerService.getUserLockerWithShareUserList(objectId)
+    const locker = await LockerService.getUserLockerWithShareUserList(objectId, false)
 
     if (err) {
       return res.status(400).json({ errors: err })
