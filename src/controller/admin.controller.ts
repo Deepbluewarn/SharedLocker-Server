@@ -78,14 +78,12 @@ export const searchUser = [
   async (req: Request, res: Response, next: NextFunction) => {
     const { nickname, userId } = req.body
 
-    console.log('nickname', nickname)
-
     if (!nickname && !userId) {
       return res.status(400).json({ success: false, message: '회원 아이디 혹은 닉네임을 입력하세요.' })
     }
 
     if (userId){
-      req.info.message = await UserService.findUserByObjectId(userId)
+      req.info.message = await UserService.findUsersByObjectId(userId)
     } else {
       req.info.message = await UserService.findUsersByNickname(nickname)
     }

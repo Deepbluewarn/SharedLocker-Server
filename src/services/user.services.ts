@@ -15,6 +15,9 @@ const lookupForAdmin = {
   as: 'admin'
 }
 const UserService = {
+  findUsersByObjectId: async (userId: string) => {
+    return await Users.find({ userId })
+  },
   findUserByObjectId: async (userId: string) => {
     return await Users.findOne({ userId })
   },
