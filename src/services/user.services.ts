@@ -5,6 +5,7 @@ import Lockers from '../models/Lockers.js'
 
 const ADMIN_MASK = {
   role: 1,
+  assignedLocker: 1,
 }
 
 const lookupForAdmin = {
@@ -25,14 +26,30 @@ const UserService = {
     return (await Users.aggregate([
       { $match: { userId } },
       { $lookup: lookupForAdmin },
-      { $project: {
-        userId: 1,
-        nickname: 1,
-        email: 1,
-        admin: 1,
-        password: 1,
-        createdAt: 1
-      }}
+      {
+        $unwind: {
+          path: '$admin',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: 'lockers',
+          localField: 'admin.assignedLocker',
+          foreignField: '_id',
+          as: 'assignedLocker'
+        }
+      },
+      {
+        $project: {
+          userId: 1,
+          nickname: 1,
+          email: 1,
+          admin: 1,
+          assignedLocker: 1,
+          createdAt: 1
+        }
+      }
     ]))[0]
   },
 
