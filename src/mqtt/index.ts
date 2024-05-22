@@ -15,10 +15,9 @@ const pub_topic = 'sharedLocker-response'
 const qos = 0
 
 const client = mqtt.connect(process.env.MQTT_CONNECT, {
-  clientId,
-  username,
-  password,
-  // ...other options
+    clientId,
+    username,
+    password,
 })
 
 client.subscribe(sub_topic, { qos }, (error) => {
@@ -37,23 +36,23 @@ client.on('message', async (topic, payload) => {
         const buildingNumber: number = request_obj.buildingNumber;
         const floor: number = request_obj.floor;
         const lockerNumber: number = request_obj.lockerNumber;
-    
+
         let response;
-    
-        if(topic === sub_topic) {
+
+        if (topic === sub_topic) {
             const redisUserId = await AuthService.getUserIdByQrKey(request_obj.key)
-    
+
             if (!redisUserId) {
-    
+
                 // res.status(400).json({ success: false, message: 'QR키가 유효하지 않습니다.' })
                 response = { success: false, message: 'QR키가 유효하지 않습니다.' }
             }
-            
-              // mongoose userid 생성
-              const userId = new Types.ObjectId(redisUserId)
-            
-              response = await LockerService.checkLockerAccessByUserId(userId, buildingNumber, floor, lockerNumber)
-    
+
+            // mongoose userid 생성
+            const userId = new Types.ObjectId(redisUserId)
+
+            response = await LockerService.checkLockerAccessByUserId(userId, buildingNumber, floor, lockerNumber)
+
             client.publish(pub_topic, JSON.stringify(response), { qos }, (error) => {
                 if (error) {
                     console.error(error)
