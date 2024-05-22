@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema({
   userId: {
     type: String,
     unique: true,
-    require: true
+    required: true
   },
   nickname: {
     type: String
