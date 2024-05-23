@@ -584,7 +584,7 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingNumber
   // 관리자인지 확인.
   const admin = await adminServices.findAdminWithAssignedLocker(user_id)
 
-  if (admin.role === 'worker' && admin.assignedLocker.buildingNumber === buildingNumber) {
+  if (admin && admin.role === 'worker' && admin.assignedLocker.buildingNumber === buildingNumber) {
     return {
       success: true,
       message: '[마스터 키] 보관함에 접근할 수 있습니다.',
