@@ -17,11 +17,11 @@ export const getAllBuildingList = async (req: Request, res: Response, next: Next
   } catch (error) { /* empty */ }
 }
 
-export const getAllFloorByBuildingName = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllFloorByBuildingNumber = async (req: Request, res: Response, next: NextFunction) => {
   const buildingNumber = Number(req.query.buildingNumber)
 
   if (!buildingNumber) {
-    res.status(400).json({ error: 'Invalid query parameters' })
+    res.status(400).json({ success: false, message: 'Invalid query parameters' })
     return
   }
 
@@ -40,7 +40,7 @@ export const getLockerList = async (req: Request, res: Response, next: NextFunct
   const floor = Number(req.query.floor)
 
   if (!buildingNumber || isNaN(floor)) {
-    res.status(400).json({ error: 'Invalid query parameters' })
+    res.status(400).json({ success: false, message: 'Invalid query parameters' })
     return
   }
 
@@ -77,7 +77,7 @@ export const getLockerDetail = async (req: Request, res: Response, next: NextFun
   const lockerNumber = Number(req.query.lockerNumber)
 
   if (isNaN(buildingNumber) || isNaN(floor) || isNaN(lockerNumber)) {
-    res.status(400).json({ error: 'Invalid query parameters' })
+    res.status(400).json({ success : false, message: 'Invalid query parameters' })
     return
   }
 
