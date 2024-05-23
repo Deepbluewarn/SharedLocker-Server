@@ -13,7 +13,7 @@ const AdminsSchema = new mongoose.Schema({
         type: ObjectId,
         required: true,
         unique: true,
-        ref: 'Users'
+        ref: 'users'
     },
     role: {
         type: String,
@@ -21,7 +21,7 @@ const AdminsSchema = new mongoose.Schema({
     },
     assignedLocker: {
         type: ObjectId,
-        ref: 'Lockers'
+        ref: 'lockers'
     }
 })
 

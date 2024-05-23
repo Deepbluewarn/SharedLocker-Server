@@ -46,17 +46,17 @@ const LockerSchema = new mongoose.Schema({
           },
           claimedBy: {
             type: ObjectId,
-            ref: 'Users',
+            ref: 'users',
             default: null
           },
           sharedWith: {
             type: [ObjectId],
-            ref: 'Users',
+            ref: 'users',
             default: []
           },
           shareRequested: {
             type: [ObjectId],
-            ref: 'Users',
+            ref: 'users',
             default: []
           },
           status: {
