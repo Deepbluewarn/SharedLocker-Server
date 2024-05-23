@@ -33,9 +33,9 @@ client.on('message', async (topic, payload) => {
 
     try {
         const request_obj = JSON.parse(payload.toString())
-        const buildingNumber: number = request_obj.buildingNumber;
-        const floor: number = request_obj.floor;
-        const lockerNumber: number = request_obj.lockerNumber;
+        const buildingNumber: number = Number(request_obj.buildingNumber);
+        const floor: number = Number(request_obj.floor);
+        const lockerNumber: number = Number(request_obj.lockerNumber);
 
         let response;
 
