@@ -40,7 +40,7 @@ const generateNewHashedPassword = async (password: string) => {
 
 const revokeAccessToken = async (token: string) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload
-  const user = await userServices.findUserByObjectId(decoded.id)
+  const user = await userServices.findUserByUserId(decoded.id)
 
   if (!user) throw new Error('User not found')
 
@@ -51,7 +51,7 @@ const revokeAccessToken = async (token: string) => {
 
 const revokeRefreshToken = async (token: string) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload
-  const user = await userServices.findUserByObjectId(decoded.id)
+  const user = await userServices.findUserByUserId(decoded.id)
 
   if (!user) throw new Error('User not found')
 

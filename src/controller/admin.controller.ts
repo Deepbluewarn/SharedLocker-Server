@@ -83,7 +83,7 @@ export const searchUser = [
     }
 
     if (userId){
-      req.info.message = await UserService.findUsersByObjectId(userId)
+      req.info.message = await UserService.findUsersByUserId(userId)
     } else {
       req.info.message = await UserService.findUsersByNickname(nickname)
     }
@@ -115,7 +115,7 @@ export const getUserInfoByUserId = [
       return res.status(400).json({ success: false, message: '사용자 ID를 입력해주세요.' })
     }
 
-    req.info.message = await UserService.findUserByObjectId(userId as string)
+    req.info.message = await UserService.findUserByUserId(userId as string)
 
     res.status(200).json(req.info)
   }

@@ -16,13 +16,13 @@ const lookupForAdmin = {
   as: 'admin'
 }
 const UserService = {
-  findUsersByObjectId: async (userId: string) => {
+  findUsersByUserId: async (userId: string) => {
     return await Users.find({ userId })
   },
-  findUserByObjectId: async (userId: string) => {
+  findUserByUserId: async (userId: string) => {
     return await Users.findOne({ userId })
   },
-  findUserByUserId: async (userId: string) => {
+  findUserByUserIdWithAdmin: async (userId: string) => {
     return (await Users.aggregate([
       { $match: { userId } },
       { $lookup: lookupForAdmin },
@@ -36,6 +36,31 @@ const UserService = {
         $lookup: {
           from: 'lockers',
           localField: 'admin.assignedLocker',
+          pipeline: [
+            {
+              $unwind: '$floors',
+            },
+            {
+              $unwind: '$floors.lockers'
+            },
+            {
+              $group: {
+                _id: '$_id',
+                buildingNumber: {$first: '$buildingNumber'},
+                buildingName: {$first: '$buildingName'},
+                lockers: {
+                  $push: {
+                    floorNumber: '$floors.floorNumber',
+                    lockerNumber: '$floors.lockers.lockerNumber',
+                    claimedBy: '$floors.lockers.claimedBy',
+                    sharedWith: '$floors.lockers.sharedWith',
+                    shareRequested: '$floors.lockers.shareRequested',
+                    status: '$floors.lockers.status'
+                  }
+                }
+              }
+            }
+          ],
           foreignField: '_id',
           as: 'assignedLocker'
         }
