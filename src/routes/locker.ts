@@ -6,7 +6,7 @@ const lockerRouter = express.Router()
 lockerRouter.get('/locker/building', getAllBuildingList)
 lockerRouter.get('/locker/floor', getAllFloorByBuildingNumber)
 lockerRouter.get('/lockers', getLockerList)
-lockerRouter.get('/all-lockers', getAllLockerList)
+lockerRouter.get('/locker/all', getAllLockerList)
 lockerRouter.get('/locker', getLockerDetail)
 lockerRouter.post('/locker', claimLocker)
 
