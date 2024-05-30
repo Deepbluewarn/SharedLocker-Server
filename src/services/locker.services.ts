@@ -1,5 +1,5 @@
 import { Types } from 'mongoose'
-import Lockers from '../models/Lockers.js'
+import Lockers, { Locker } from '../models/Lockers.js'
 import Users, { IUser } from '../models/Users.js'
 import { IServiceMessage } from '../interfaces/index.js'
 import adminServices from './admin.services.js'
@@ -128,6 +128,46 @@ const getLockerDetail = async (buildingNumber: number, floorNumber: number, lock
         shareRequestedUsers: 1,
       }
     },
+  ])
+}
+
+/**
+ * 전체 보관함 구조를 조회합니다.
+ */
+
+const getLockerStructure = async () => {
+  return await Lockers.aggregate([
+    {
+      $unwind: {
+        path: '$floors',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $group: {
+        _id: '$_id',
+        buildingNumber: {
+          $first: '$buildingNumber'
+        },
+        buildingName: {
+          $first: '$buildingName'
+        },
+        floorList: {
+          $push: '$floors.floorNumber'
+        },
+        lockerList: {
+          $push: {
+            floor: '$floors.floorNumber',
+            list: '$floors.lockers.lockerNumber'
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+      }
+    }
   ])
 }
 
@@ -361,6 +401,57 @@ const claimLocker = async (user_id: Types.ObjectId, buildingNumber: number, floo
       lockerNumber: Number(lockerNumber)
     }
   }
+}
+
+const createLocker = async (buildingNumber: number, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
+  const locker = await Lockers.findOne({
+    buildingNumber,
+    floors: {
+      $elemMatch: {
+        floorNumber,
+        lockers: {
+          $elemMatch: {
+            lockerNumber
+          }
+        }
+      }
+    }
+  })
+
+  if (locker) {
+    return { success: false, message: '이미 존재하는 보관함입니다.' }
+  }
+
+  const newLocker: Locker = {
+    lockerNumber: lockerNumber,
+    claimedBy: null,
+    sharedWith: [],
+    shareRequested: [],
+    status: 'Empty'
+  }
+
+  const update_res = await Lockers.findOneAndUpdate(
+    { 
+      buildingNumber: buildingNumber,
+    },
+    {
+      $push: {
+        'floors.$[i].lockers': newLocker
+      }
+    },
+    {
+      arrayFilters: [
+        { 'i.floorNumber': floorNumber }
+      ],
+      upsert: true
+    },
+  )
+
+  if (!update_res) {
+    return { success: false, message: '보관함을 추가하는데 실패했습니다.' }
+  }
+
+  return { success: true, message: `${lockerNumber}번 보관함이 성공적으로 등록되었습니다.` }
 }
 
 /**
@@ -617,37 +708,27 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingNumber
   } else {
     return { success: false, message: '보관함에 접근할 수 없습니다.' }
   }
+}
 
-  
-  // const [claimedLockers, sharedLockers] = await Promise.all([
-  //   getUserLockerList(user_id),
-  //   getUserSharedLockerList(user_id)
-  // ])
-
-  // const allLockers = [...claimedLockers, ...sharedLockers]
-  // console.log('[Locker Service DEBUG] allLockers: ', allLockers)
-
-
-  // const locker = allLockers.find(
-  //   locker =>
-  //     locker.buildingNumber === Number(buildingNumber) &&
-  //           Number(locker.floorNumber) === Number(floorNumber) &&
-  //           Number(locker.lockerNumber) === Number(lockerNumber)
-  // )
-
-  // if (!locker) {
-  //   return { success: false, message: '해당 보관함을 찾을 수 없거나 등록되어 있지 않은 보관함입니다.' }
-  // }
-
-  // return {
-  //   success: true,
-  //   message: '보관함에 접근할 수 있습니다.',
-  //   value: {
-  //     buildingName: locker.buildingName,
-  //     floorNumber: Number(locker.floorNumber),
-  //     lockerNumber: Number(locker.lockerNumber)
-  //   }
-  // }
+const deleteLocker = async (buildingNumber: number, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
+  const delete_res = await Lockers.findOneAndUpdate(
+    { buildingNumber: buildingNumber },
+    {
+      $pull: {
+        'floors.$[i].lockers': { lockerNumber: lockerNumber }
+      }
+    },
+    {
+      arrayFilters: [
+        { 'i.floorNumber': floorNumber }
+      ]
+    }
+  )
+  console.log('[deleteLocker] delete_res: ', delete_res)
+  if (!delete_res) {
+    return { success: false, message: '보관함을 삭제하는데 실패했습니다.', value: { buildingNumber, floorNumber, lockerNumber }}
+  }
+  return { success: true, message: '보관함이 성공적으로 삭제되었습니다.', value: { buildingNumber, floorNumber, lockerNumber  }}
 }
 
 export default {
@@ -656,13 +737,16 @@ export default {
   getLockerList,
   getAllLockerList,
   getLockerDetail,
+  getLockerStructure,
   getUserLockerList,
   getUserSharedLockerWithShareUserList,
   getUserLockerWithShareUserList,
   claimLocker,
+  createLocker,
   shareLocker,
   cancelClaimedLocker,
   cancelSharedLocker,
   requestLockerShare,
-  checkLockerAccessByUserId
+  checkLockerAccessByUserId,
+  deleteLocker
 }

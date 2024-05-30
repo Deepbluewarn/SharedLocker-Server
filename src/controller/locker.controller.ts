@@ -3,6 +3,8 @@ import LockerService from '../services/locker.services.js'
 import passport from '../services/passport/setup.js'
 import { Types } from 'mongoose'
 import { type IUser } from '../models/Users.js'
+import { checkUserRole } from '../middlewares/role.js'
+import lockerServices from '../services/locker.services.js'
 
 export const getAllBuildingList = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -94,6 +96,20 @@ export const getLockerDetail = async (req: Request, res: Response, next: NextFun
   }
 }
 
+export const getLockerStructure = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const lockerStructure = await LockerService.getLockerStructure()
+
+    res.json({
+      success: true,
+      message: '보관함 구조를 불러왔습니다.',
+      value: lockerStructure
+    })
+  } catch (err) {
+
+  }
+}
+
 export const claimLocker = async (req: Request, res: Response, next: NextFunction) => {
   const buildingNumber = req.body.buildingNumber
   const floorNumber = req.body.floorNumber
@@ -119,6 +135,32 @@ export const claimLocker = async (req: Request, res: Response, next: NextFunctio
         res.status(400).json(locker_res)
       }
     } catch (err) {
+      res.status(500).json(err)
+    }
+  })(req, res, next)
+}
+
+export const createLocker = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('admin', async (err, user: IUser, info) => {
+    const buildingNumber = req.body.buildingNumber
+    const floorNumber = req.body.floorNumber
+    const lockerNumber = req.body.lockerNumber
+
+    if (!buildingNumber || !floorNumber || !lockerNumber) {
+      res.status(400).json({ success: false, message: 'Invalid query parameters' })
+      return
+    }
+
+    try {
+      const locker_res = await LockerService.createLocker(buildingNumber, floorNumber, lockerNumber)
+      
+      if (locker_res.success) {
+        res.status(200).json(locker_res)
+      } else {
+        res.status(400).json(locker_res)
+      }
+    } catch (err) {
+
       res.status(500).json(err)
     }
   })(req, res, next)
@@ -219,3 +261,33 @@ export const cancelLocker = (req: Request, res: Response, next: NextFunction) =>
     }
   })(req, res, next)
 }
+
+export const deleteLocker = [
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('admin', { session: false }, (err, user: IUser, info) => {
+      if (err) {
+        return res.status(500).json(info)
+      }
+
+      if (!user) {
+        return res.status(401).json(info)
+      }
+  
+      next()
+    })(req, res, next)
+  },
+  checkUserRole(['operator']),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const buildingNumber = Number(req.query.buildingNumber)
+    const floorNumber = Number(req.query.floorNumber)
+    const lockerNumber = Number(req.query.lockerNumber)
+
+    if (!buildingNumber || isNaN(floorNumber) || isNaN(lockerNumber)) {
+      res.status(400).json({ success: false, message: 'Invalid query parameters' })
+      return
+    }
+
+    const del = await lockerServices.deleteLocker(buildingNumber, floorNumber, lockerNumber)
+    res.status(200).json(del)
+  }
+]
