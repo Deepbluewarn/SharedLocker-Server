@@ -4,7 +4,109 @@ import Roles from '../models/Roles.js'
 import AdminServices from '../services/admin.services.js'
 import UserService from '../services/user.services.js'
 
-// userId, password, nickname, email
+const initialLockers = [
+  {
+    buildingNumber: 23,
+    buildingName: '정보공학관',
+    floors: [
+      {
+        floorNumber: 1,
+        lockers: [
+          {
+            lockerNumber: 101,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 102,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 103,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 104,
+            claimedBy: null,
+            sharedWith: []
+          }
+        ]
+      },
+      {
+        floorNumber: 8,
+        lockers: [
+          {
+            lockerNumber: 101,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 102,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 103,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 104,
+            claimedBy: null,
+            sharedWith: []
+          }
+        ]
+      }
+    ]
+  }, {
+    buildingNumber: 12,
+    buildingName: '중앙도서관',
+    floors: [
+      {
+        floorNumber: 1,
+        lockers: [
+          {
+            lockerNumber: 101,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 102,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 103,
+            claimedBy: null,
+            sharedWith: []
+          },
+          {
+            lockerNumber: 104,
+            claimedBy: null,
+            sharedWith: []
+          }
+        ]
+      }
+    ]
+  }
+]
+
+const initialRoles = [
+  {
+    name: '운영 관리자',
+    role: 'operator'
+  },
+  {
+    name: '실무 관리자',
+    role: 'worker'
+  },
+  {
+    name: '사용자',
+    role: 'user'
+  }
+]
 
 async function initializeAdmin() {
   // Check if there are any users in the Users collection
@@ -21,115 +123,14 @@ async function initializeAdmin() {
 }
 
 const initData = async () => {
-  await Lockers.deleteMany({})
-  await Roles.deleteMany({})
+  if (await Lockers.countDocuments() === 0) {
+    await Lockers.insertMany(initialLockers)
+  }
 
-  const initialLockers = [
-    {
-      buildingNumber: 23,
-      buildingName: '정보공학관',
-      floors: [
-        {
-          floorNumber: 1,
-          lockers: [
-            {
-              lockerNumber: 101,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 102,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 103,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 104,
-              claimedBy: null,
-              sharedWith: []
-            }
-          ]
-        },
-        {
-          floorNumber: 8,
-          lockers: [
-            {
-              lockerNumber: 101,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 102,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 103,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 104,
-              claimedBy: null,
-              sharedWith: []
-            }
-          ]
-        }
-      ]
-    }, {
-      buildingNumber: 12,
-      buildingName: '중앙도서관',
-      floors: [
-        {
-          floorNumber: 1,
-          lockers: [
-            {
-              lockerNumber: 101,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 102,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 103,
-              claimedBy: null,
-              sharedWith: []
-            },
-            {
-              lockerNumber: 104,
-              claimedBy: null,
-              sharedWith: []
-            }
-          ]
-        }
-      ]
-    }
-  ]
-
-  const initialRoles = [
-    {
-      name: '운영 관리자',
-      role: 'operator'
-    },
-    {
-      name: '실무 관리자',
-      role: 'worker'
-    },
-    {
-      name: '사용자',
-      role: 'user'
-    }
-  ]
-
-  await Lockers.insertMany(initialLockers)
-  await Roles.insertMany(initialRoles)
+  if (await Roles.countDocuments() === 0) {
+    await Roles.insertMany(initialRoles)
+  }
+  
   initializeAdmin()
 }
 
