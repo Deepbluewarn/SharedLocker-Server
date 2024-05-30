@@ -15,7 +15,8 @@ declare global {
     interface Request {
       info: {
         success: boolean
-        message: any
+        message: string
+        value: any
       },
       admin: {
         role: string

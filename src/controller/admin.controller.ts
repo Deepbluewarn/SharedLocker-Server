@@ -26,7 +26,7 @@ export const roleList = [
   checkUserRole(['operator', 'worker']),
   async (req: Request, res: Response, next: NextFunction) => {
     const roles = await authServices.getRoleList()
-    req.info.message = roles
+    req.info.value = roles
     res.status(200).json(req.info)
   }
 ]
@@ -83,9 +83,9 @@ export const searchUser = [
     }
 
     if (userId){
-      req.info.message = await UserService.findUsersByUserId(userId)
+      req.info.value = await UserService.findUsersByUserId(userId)
     } else {
-      req.info.message = await UserService.findUsersByNickname(nickname)
+      req.info.value = await UserService.findUsersByNickname(nickname)
     }
 
     res.status(200).json(req.info)
@@ -115,7 +115,7 @@ export const getUserInfoByUserId = [
       return res.status(400).json({ success: false, message: '사용자 ID를 입력해주세요.' })
     }
 
-    req.info.message = await UserService.findUserByUserId(userId as string)
+    req.info.value = await UserService.findUserByUserId(userId as string)
 
     res.status(200).json(req.info)
   }

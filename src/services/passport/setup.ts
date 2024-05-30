@@ -117,7 +117,7 @@ passport.use('user',
     // 토큰에 해당하는 유저가 있으면 해당 유저의 객체를 반환한다.
     UserService.findUserByUserIdWithAdmin(jwt_payload.id).then((user) => {
       if (user) {
-        done(null, user, { success: true, message: user })
+        done(null, user, { success: true, message: '', value: user })
       } else {
         done(null, false, { success: false, message: '유저를 찾을 수 없습니다.' })
       }
@@ -146,8 +146,8 @@ passport.use('admin', new JwtStrategy({
       AdminService.findAdminByUserObjectId(user._id).then(admin => {
         req.user = user
         req.admin = admin
-        req.info = { success: true, message: user }
-        done(null, user, { success: true, message: user })
+        req.info = { success: true, message: '', value: user }
+        done(null, user, { success: true, message: '', value: user })
       })
     }
   })
