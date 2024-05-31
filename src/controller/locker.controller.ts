@@ -140,8 +140,22 @@ export const claimLocker = async (req: Request, res: Response, next: NextFunctio
   })(req, res, next)
 }
 
-export const createLocker = async (req: Request, res: Response, next: NextFunction) => {
-  passport.authenticate('admin', async (err, user: IUser, info) => {
+export const createLocker = [
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('admin', (err, user: IUser, info) => {
+      if (err) {
+        return res.status(500).json(info)
+      }
+
+      if (!user) {
+        return res.status(401).json(info)
+      }
+  
+      next()
+    })(req, res, next)
+  },
+  checkUserRole(['operator']),
+  async (req: Request, res: Response, next: NextFunction) => {
     const buildingNumber = req.body.buildingNumber
     const floorNumber = req.body.floorNumber
     const lockerNumber = req.body.lockerNumber
@@ -163,8 +177,8 @@ export const createLocker = async (req: Request, res: Response, next: NextFuncti
 
       res.status(500).json(err)
     }
-  })(req, res, next)
-}
+  }
+]
 
 export const shareLocker = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('user', async (err, user: IUser, info) => {
