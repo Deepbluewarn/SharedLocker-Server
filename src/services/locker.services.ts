@@ -5,7 +5,6 @@ import { IServiceMessage } from '../interfaces/index.js'
 import adminServices from './admin.services.js'
 
 const USERS_MASK = {
-  _id: 0,
   __v: 0,
   refresh_token: 0
 }
@@ -688,11 +687,11 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingNumber
     }
   }
 
-  const claimedUser: IUser = targetLocker[0].claimedByUser
+  const claimedUser: IUser[] = targetLocker[0].claimedByUser
   const sharedUsers: IUser[] = targetLocker[0].sharedWithUsers
 
-  const isUserClaimed = user_id.equals(claimedUser._id)
-  const isUserInSharedUsers = sharedUsers.some(user => user._id === user_id);
+  const isUserClaimed = claimedUser.some(user => user_id.equals(user._id));
+  const isUserInSharedUsers = sharedUsers.some(user => user_id.equals(user._id));
 
   if (isUserClaimed || isUserInSharedUsers) {
     return {
