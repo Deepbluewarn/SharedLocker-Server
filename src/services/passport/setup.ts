@@ -13,7 +13,7 @@ dotenv.config()
 
 passport.use('login',
   new LocalStrategy({ usernameField: 'id' }, async (userId, password, done) => {
-    UserService.findUserByUserId(userId).then((user) => {
+    UserService._findUserByUserId(userId).then((user) => {
       if (!user) {
         done(null, false, { success: false, message: '계정이 존재하지 않습니다.' })
       } else {
@@ -52,7 +52,7 @@ passport.use('logout',
   }, (req: Request, jwt_payload, done) => {
     const accessTokenExtractor = ExtractJwt.fromAuthHeaderAsBearerToken();
 
-    UserService.findUserByUserId(jwt_payload.id).then((user) => {
+    UserService._findUserByUserId(jwt_payload.id).then((user) => {
       if (!user) {
         done(null, false, { success: false, message: 'User not found' })
       } else {
@@ -79,7 +79,7 @@ passport.use('register',
     console.log(`[passport register] userId: ${userId}, password: ${password}`)
     console.log(`[passport register] email: ${req.body.email}, nickname: ${req.body.nickname}`)
 
-    UserService.findUserByUserId(userId)
+    UserService._findUserByUserId(userId)
       .then(async (user) => {
         console.log('[passport register] findUserByObjectId user: ', user)
         if (user) {
@@ -137,7 +137,7 @@ passport.use('admin', new JwtStrategy({
 }, (req: Request, jwt_payload: JwtPayload, done: VerifiedCallback) => {
   if (!jwt_payload) { done(null, false, { success: false, message: '권한 없음' }); return }
 
-  const user_promise = UserService.findUserByUserId(jwt_payload.id)
+  const user_promise = UserService._findUserByUserId(jwt_payload.id)
 
   user_promise.then(user => {
     if (!user) {
@@ -176,7 +176,7 @@ passport.use('token',
     // DB 의 Refresh Token 과 유저의 RT 를 비교하여 유효성을 확인한다.
     // 만약 일치하면 jwt.verify() 로 유저의 rt 를 한번 더 검증한다.
 
-    UserService.findUserByUserId(jwt_payload.id).then(user => {
+    UserService._findUserByUserId(jwt_payload.id).then(user => {
       // 공격자가 Token 을 탈취하여 유저의 AccessToken 을 발급받으면
       // DB 에는 공격자의 RefreshToken 이 저장된다.
       // 정상 유저가 클라이언트에 가지고 있던 RefreshToken 과 DB 의 RT 를 비교해야 한다.

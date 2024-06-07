@@ -17,9 +17,38 @@ const lookupForAdmin = {
 }
 const UserService = {
   findUsersByUserId: async (userId: string) => {
-    return await Users.find({ userId })
+    return (await Users.aggregate([
+      { $match: { userId: { $regex: userId, $options: 'i' } } },
+      { $lookup: lookupForAdmin },
+      {
+        $unwind: {
+          path: '$admin',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      { $project: { password: 0, refreshToken: 0, __v: 0, _id: 0 } }
+    ]))
   },
   findUserByUserId: async (userId: string) => {
+    return (await Users.aggregate([
+      { $match: { userId }},
+      { $lookup: lookupForAdmin },
+      {
+        $unwind: {
+          path: '$admin',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      { $project: { password: 0, refreshToken: 0, __v: 0, _id: 0 } }
+    ]))[0]
+  },
+  /**
+   * UserId로 Users를 찾습니다.
+   * 이 함수는 백엔드 코드에서만 사용되며 API로 노출되지 않습니다.
+   * @param userId 
+   * @returns 
+   */
+  _findUserByUserId: async (userId: string) => {
     return await Users.findOne({ userId })
   },
   findUserByUserIdWithAdmin: async (userId: string) => {
