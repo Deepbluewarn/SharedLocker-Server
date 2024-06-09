@@ -105,6 +105,10 @@ const getAllLockerList = async () => {
 }
 
 const getLockerDetail = async (buildingNumber: number, floorNumber: number, lockerNumber: number, includeMetadata: boolean) => {
+  buildingNumber = Number(buildingNumber)
+  floorNumber = Number(floorNumber)
+  lockerNumber = Number(lockerNumber)
+
   return await Lockers.aggregate([
     { $match: { buildingNumber } },
     { $unwind: '$floors' },
@@ -680,7 +684,7 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingNumber
       message: '[마스터 키] 보관함에 접근할 수 있습니다.',
       value: {
         buildingName: targetLocker[0].buildingName,
-        buildingNumber: buildingNumber,
+        buildingNumber: Number(buildingNumber),
         floorNumber: Number(floorNumber),
         lockerNumber: Number(lockerNumber)
       }

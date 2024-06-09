@@ -116,7 +116,10 @@ export const getQrKey = async (req: Request, res: Response, next: NextFunction) 
 
 export const checkLockerAccess = async (req: Request, res: Response, next: NextFunction) => {
   // body 안에 있는 userid, buildingid 를 가져옴
-  const { qrKey, buildingNumber, floorNumber, lockerNumber } = req.body
+  const { qrKey } = req.body;
+  const buildingNumber = Number(req.body.buildingNumber);
+  const floorNumber = Number(req.body.floorNumber);
+  const lockerNumber = Number(req.body.lockerNumber);
   const redisUserId = await AuthService.getUserIdByQrKey(qrKey)
 
   if (!redisUserId) {
