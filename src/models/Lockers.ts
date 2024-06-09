@@ -13,13 +13,36 @@ export interface Locker {
   claimedBy: Types.ObjectId | null
   sharedWith: Types.ObjectId[]
   shareRequested: Types.ObjectId[]
-  status: 'Empty' | 'Share_Available' | 'Unavailable' | 'Maintenance'
+  status: 'Empty' | 'Share_Available' | 'Unavailable' | 'Maintenance',
+  accessHistory: LockerAccess[]
 }
 
 export interface Floor {
   floorNumber: number
   lockers: Locker[]
 }
+
+export interface LockerAccess {
+  userId: String | null
+  accessTime: Date | null
+  accessType: 'owner' | 'shared' | null
+}
+
+const LockerAccessSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    default: null
+  },
+  accessTime: {
+    type: Date,
+    default: Date.now
+  },
+  accessType: {
+    type: String,
+    enum: ['owner', 'shared'],
+    default: null
+  }
+})
 
 const LockerSchema = new mongoose.Schema({
   buildingNumber: {
@@ -64,6 +87,10 @@ const LockerSchema = new mongoose.Schema({
             // Empty: 빈 사물함 (Claim 가능), Share_Available: 공유 가능, UnAvailable: 사용 불가, Maintenance: 수리 중
             enum: ['Empty', 'Share_Available', 'Unavailable', 'Maintenance'],
             default: 'Empty'
+          },
+          accessHistory: {
+            type: [LockerAccessSchema],
+            default: []
           }
         }
       ]

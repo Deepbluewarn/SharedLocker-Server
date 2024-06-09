@@ -129,6 +129,7 @@ const getLockerDetail = async (buildingNumber: number, floorNumber: number, lock
         claimedByUser: 1,
         sharedWithUsers: 1,
         shareRequestedUsers: 1,
+        accessHistory: '$floors.lockers.accessHistory',
       }
     },
   ])
@@ -430,7 +431,8 @@ const createLocker = async (buildingNumber: number, floorNumber: number, lockerN
     claimedBy: null,
     sharedWith: [],
     shareRequested: [],
-    status: 'Empty'
+    status: 'Empty',
+    accessHistory: []
   }
 
   const update_res = await Lockers.findOneAndUpdate(
@@ -694,16 +696,35 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingNumber
   const claimedUser: IUser[] = targetLocker[0].claimedByUser
   const sharedUsers: IUser[] = targetLocker[0].sharedWithUsers
 
-  const isUserClaimed = claimedUser.some(user => user_id.equals(user._id));
-  const isUserInSharedUsers = sharedUsers.some(user => user_id.equals(user._id));
+  const UserClaimed = claimedUser.find(user => user_id.equals(user._id));
+  const UserInSharedUsers = sharedUsers.find(user => user_id.equals(user._id));
 
-  if (isUserClaimed || isUserInSharedUsers) {
+  if (UserClaimed || UserInSharedUsers) {
+    const res = await Lockers.updateOne(
+      { buildingNumber: (buildingNumber) },
+      {
+        $push: {
+          'floors.$[i].lockers.$[j].accessHistory': {
+            userId: UserClaimed?.userId || UserInSharedUsers?.userId,
+            accessTime: new Date(),
+            accessType: UserClaimed ? 'owner' : 'shared'
+          }
+        }
+      },
+      {
+        arrayFilters: [
+          { 'i.floorNumber': (floorNumber) },
+          { 'j.lockerNumber': (lockerNumber) }
+        ]
+      }
+    )
+
     return {
       success: true,
       message: '보관함에 접근할 수 있습니다.',
       value: {
         buildingName: targetLocker[0].buildingName,
-        buildingNumber: buildingNumber,
+        buildingNumber: Number(buildingNumber),
         floorNumber: Number(floorNumber),
         lockerNumber: Number(lockerNumber)
       }
