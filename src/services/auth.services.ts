@@ -39,6 +39,8 @@ const generateNewHashedPassword = async (password: string) => {
 }
 
 const revokeAccessToken = async (token: string) => {
+  if (!token) return
+  
   const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload
   const user = await userServices._findUserByUserId(decoded.id)
 
@@ -49,7 +51,9 @@ const revokeAccessToken = async (token: string) => {
   return user
 }
 
-const revokeRefreshToken = async (token: string) => {
+const revokeRefreshToken = async (token?: string) => {
+  if (!token) return
+
   const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload
   const user = await userServices._findUserByUserId(decoded.id)
 

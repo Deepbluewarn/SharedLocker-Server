@@ -12,7 +12,7 @@ export const setTokenCookie = (res: Response, name: string, token: string | null
     domain: `.${process.env.API_DOMAIN}`,
     httpOnly: true,
     secure: true,
-    sameSite: 'strict'
+    sameSite: 'none'
   })
 }
 
@@ -44,6 +44,24 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     setTokenCookie(res, process.env.ACCESS_TOKEN_COOKIE_NAME, info.value.accessToken);
 
     res.status(200).json(info)
+  })(req, res, next)
+}
+
+export const kakaoLoginCallback = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('kakao', (err, user: IUser, info) => {
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+
+    setTokenCookie(res, process.env.REFRESH_TOKEN_COOKIE_NAME, info.value.refreshToken);
+    setTokenCookie(res, process.env.ACCESS_TOKEN_COOKIE_NAME, info.value.accessToken);
+
+    res.set('Authorization', info.value.accessToken)
+    res.redirect('https://sl.bluewarn.dev/oauth')
   })(req, res, next)
 }
 

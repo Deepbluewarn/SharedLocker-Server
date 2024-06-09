@@ -1,4 +1,5 @@
 import passport from 'passport'
+import { Strategy as KakaoStrategy } from 'passport-kakao'
 import { type Request } from 'express'
 import jwt, { type JwtPayload } from 'jsonwebtoken'
 import { Strategy as LocalStrategy } from 'passport-local'
@@ -43,6 +44,34 @@ passport.use('login',
     })
   })
 )
+
+passport.use(new KakaoStrategy({
+  clientID: process.env.KAKAO_CLIENT_ID,
+  clientSecret: process.env.KAKAO_CLIENT_SECRET,
+  callbackURL: process.env.KAKAO_CALLBACK_URL
+}, (accessToken, refreshToken, profile, done) => {
+  UserService._findUserByUserId(String(profile.id)).then((user) => {
+    let accessToken = AuthService.generateToken(user as Express.User)
+    let refreshToken = AuthService.generateRefreshToken(user as Express.User)
+
+    if (user) {
+      user.refreshToken = refreshToken
+      user.save()
+
+      done(null, user, { success: true, message: '카카오 로그인 성공', value: { accessToken, refreshToken }})
+    } else {
+      UserService.createOAuthUser(profile.id, profile.username).then((newUser) => {
+        accessToken = AuthService.generateToken(newUser as Express.User)
+        refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
+
+        user.refreshToken = refreshToken
+        user.save()
+
+        done(null, newUser, { success: true, message: '카카오 회원가입 성공', value: { accessToken, refreshToken }})
+      })
+    }
+  })
+}))
 
 passport.use('logout',
   new JwtStrategy({

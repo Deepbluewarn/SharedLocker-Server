@@ -120,6 +120,11 @@ const UserService = {
 
     return await newUser.save()
   },
+  createOAuthUser: async (userId: string, nickname: string, email?: string) => {
+    const newUser = new Users({ userId, nickname, email })
+
+    return await newUser.save()
+  },
   findUsersByNickname: async (nickname: string) => {
     return await Users.find({
       nickname: { $regex: nickname, $options: 'i' }
