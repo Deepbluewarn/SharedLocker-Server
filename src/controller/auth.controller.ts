@@ -75,9 +75,6 @@ export const logoutUser = async (req: Request, res: Response, next: NextFunction
       return res.status(400).json(info)
     }
 
-    res.clearCookie('Authorization')
-    res.clearCookie('refreshToken')
-
     res.status(200).json(info)
   })(req, res, next)
 }
