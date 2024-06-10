@@ -51,23 +51,35 @@ passport.use(new KakaoStrategy({
   callbackURL: process.env.KAKAO_CALLBACK_URL
 }, (accessToken, refreshToken, profile, done) => {
   UserService._findUserByUserId(String(profile.id)).then((user) => {
-    let accessToken = AuthService.generateToken(user as Express.User)
-    let refreshToken = AuthService.generateRefreshToken(user as Express.User)
-
+    let _accessToken;
+    let _refreshToken;
     if (user) {
-      user.refreshToken = refreshToken
+      _accessToken = AuthService.generateToken(user as Express.User)
+      _refreshToken = AuthService.generateRefreshToken(user as Express.User)
+
+      user.refreshToken = _refreshToken
       user.save()
 
-      done(null, user, { success: true, message: '카카오 로그인 성공', value: { accessToken, refreshToken }})
+      done(null, user, {
+        success: true, message: '카카오 로그인 성공', value: {
+          accessToken: _accessToken,
+          refreshToken: _refreshToken
+        }
+      })
     } else {
       UserService.createOAuthUser(profile.id, profile.username).then((newUser) => {
-        accessToken = AuthService.generateToken(newUser as Express.User)
-        refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
+        _accessToken = AuthService.generateToken(newUser as Express.User)
+        _refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
 
-        user.refreshToken = refreshToken
+        user.refreshToken = _refreshToken
         user.save()
 
-        done(null, newUser, { success: true, message: '카카오 회원가입 성공', value: { accessToken, refreshToken }})
+        done(null, newUser, {
+          success: true, message: '카카오 회원가입 성공', value: {
+            accessToken: _accessToken,
+            refreshToken: _refreshToken
+          }
+        })
       })
     }
   })
