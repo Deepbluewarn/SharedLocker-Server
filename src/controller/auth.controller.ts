@@ -9,7 +9,6 @@ import { Types } from 'mongoose'
 
 export const setTokenCookie = (res: Response, name: string, token: string | null) => {
   res.cookie(name, token, {
-    domain: `.${process.env.API_DOMAIN}`,
     httpOnly: true,
     secure: true,
     sameSite: 'none'
