@@ -4,6 +4,8 @@ import { type IUser } from '../models/Users'
 import AuthService from '../services/auth.services.js'
 import LockerService from '../services/locker.services.js'
 import { Types } from 'mongoose'
+import { redisQRClient } from '../db/redis_init.js'
+import crypto from 'crypto'
 
 // type tokenType = 'accessToken' | 'refreshToken'
 
@@ -47,7 +49,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 }
 
 export const kakaoLoginCallback = async (req: Request, res: Response, next: NextFunction) => {
-  passport.authenticate('kakao', (err, user: IUser, info) => {
+  passport.authenticate('web-kakao', (err, user: IUser, info) => {
     if (err) {
       return res.status(400).json({ errors: err })
     }
@@ -61,6 +63,46 @@ export const kakaoLoginCallback = async (req: Request, res: Response, next: Next
 
     res.redirect('/')
   })(req, res, next)
+}
+
+export const kakaoLoginNativeCallback = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('native-kakao', async (err, user: IUser, info) => {
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+    
+    const code = crypto.randomBytes(16).toString('hex')
+
+    await redisQRClient.set(code, JSON.stringify(info.value), 'EX', 30)
+    
+    res.redirect(`sharedlocker://welcome?code=${code}`)
+  })(req, res, next)
+}
+
+export const resolveTokenByAuthorizationCode = async (req: Request, res: Response, next: NextFunction) => {
+  const code = req.body.code
+
+  if (!code) {
+    res.status(400).json({ success: false, message: '코드가 없습니다.' })
+    return
+  }
+
+  const token = await redisQRClient.get(code)
+
+  if (!token) {
+    res.status(400).json({ success: false, message: '코드가 유효하지 않습니다.' })
+    return
+  }
+
+  const tokenObj = JSON.parse(token)
+
+  await redisQRClient.del(code)
+
+  res.status(200).json({ success: true, message: '토큰 발급 완료', value: tokenObj })
 }
 
 export const logoutUser = async (req: Request, res: Response, next: NextFunction) => {

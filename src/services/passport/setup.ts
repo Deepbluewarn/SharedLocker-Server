@@ -45,45 +45,17 @@ passport.use('login',
   })
 )
 
-passport.use(new KakaoStrategy({
+passport.use('web-kakao', new KakaoStrategy({
   clientID: process.env.KAKAO_CLIENT_ID,
   clientSecret: process.env.KAKAO_CLIENT_SECRET,
   callbackURL: process.env.KAKAO_CALLBACK_URL
-}, (accessToken, refreshToken, profile, done) => {
-  UserService._findUserByUserId(String(profile.id)).then((user) => {
-    let _accessToken;
-    let _refreshToken;
-    if (user) {
-      _accessToken = AuthService.generateToken(user as Express.User)
-      _refreshToken = AuthService.generateRefreshToken(user as Express.User)
+}, kakaoCallback))
 
-      user.refreshToken = _refreshToken
-      user.save()
-
-      done(null, user, {
-        success: true, message: '카카오 로그인 성공', value: {
-          accessToken: _accessToken,
-          refreshToken: _refreshToken
-        }
-      })
-    } else {
-      UserService.createOAuthUser(profile.id, profile.username).then((newUser) => {
-        _accessToken = AuthService.generateToken(newUser as Express.User)
-        _refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
-
-        user.refreshToken = _refreshToken
-        user.save()
-
-        done(null, newUser, {
-          success: true, message: '카카오 회원가입 성공', value: {
-            accessToken: _accessToken,
-            refreshToken: _refreshToken
-          }
-        })
-      })
-    }
-  })
-}))
+passport.use('native-kakao', new KakaoStrategy({
+  clientID: process.env.KAKAO_CLIENT_ID,
+  clientSecret: process.env.KAKAO_CLIENT_SECRET,
+  callbackURL: process.env.KAKAO_NATIVE_CALLBACK_URL
+}, kakaoCallback))
 
 passport.use('logout',
   new JwtStrategy({
@@ -251,6 +223,42 @@ passport.use('token',
     })
   })
 )
+
+function kakaoCallback(accessToken, refreshToken, profile, done) {
+  UserService._findUserByUserId(String(profile.id)).then((user) => {
+    let _accessToken;
+    let _refreshToken;
+    if (user) {
+      _accessToken = AuthService.generateToken(user as Express.User)
+      _refreshToken = AuthService.generateRefreshToken(user as Express.User)
+
+      user.refreshToken = _refreshToken
+      user.save()
+
+      done(null, user, {
+        success: true, message: '카카오 로그인 성공', value: {
+          accessToken: _accessToken,
+          refreshToken: _refreshToken
+        }
+      })
+    } else {
+      UserService.createOAuthUser(profile.id, profile.username).then((newUser) => {
+        _accessToken = AuthService.generateToken(newUser as Express.User)
+        _refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
+
+        user.refreshToken = _refreshToken
+        user.save()
+
+        done(null, newUser, {
+          success: true, message: '카카오 회원가입 성공', value: {
+            accessToken: _accessToken,
+            refreshToken: _refreshToken
+          }
+        })
+      })
+    }
+  })
+}
 
 const refreshTokenExtractor = (req: Request) => {
   return req.body.refresh_token
