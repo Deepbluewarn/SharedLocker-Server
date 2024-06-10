@@ -59,8 +59,7 @@ export const kakaoLoginCallback = async (req: Request, res: Response, next: Next
     setTokenCookie(res, process.env.REFRESH_TOKEN_COOKIE_NAME, info.value.refreshToken);
     setTokenCookie(res, process.env.ACCESS_TOKEN_COOKIE_NAME, info.value.accessToken);
 
-    res.set('Authorization', info.value.accessToken)
-    res.redirect('https://sl.bluewarn.dev/oauth')
+    res.redirect('/')
   })(req, res, next)
 }
 
