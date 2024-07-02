@@ -48,8 +48,22 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
   })(req, res, next)
 }
 
+export const kakaoLogin = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('web-kakao', {
+    prompt: 'login'
+  }, (err, user, info) => {
+  })(req, res, next)
+}
+
+export const kakaoNativeLogin = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('native-kakao', {
+    prompt: 'login'
+  }, (err, user, info) => {
+  })(req, res, next)
+}
+
 export const kakaoLoginCallback = async (req: Request, res: Response, next: NextFunction) => {
-  passport.authenticate('web-kakao', (err, user: IUser, info) => {
+  passport.authenticate('web-kakao', {prompt: 'login'}, (err, user: IUser, info) => {
     if (err) {
       return res.status(400).json({ errors: err })
     }
@@ -66,7 +80,9 @@ export const kakaoLoginCallback = async (req: Request, res: Response, next: Next
 }
 
 export const kakaoLoginNativeCallback = async (req: Request, res: Response, next: NextFunction) => {
-  passport.authenticate('native-kakao', async (err, user: IUser, info) => {
+  passport.authenticate('native-kakao', {prompt: 'login'}, async (err, user: IUser, info) => {
+    
+    console.log('kakaoLoginNativeCallback info: ', info)
     if (err) {
       return res.status(400).json({ errors: err })
     }
