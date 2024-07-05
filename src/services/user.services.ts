@@ -16,6 +16,26 @@ const lookupForAdmin = {
   as: 'admin'
 }
 const UserService = {
+  queryUserList: async (query: string) => {
+    return await Users.aggregate([
+      {
+        $match: {
+          $or: [
+            { userId: { $regex: query, $options: 'i' } },
+            { nickname: { $regex: query, $options: 'i' } }
+          ]
+        }
+      },
+      {
+        $project: {
+          password: 0,
+          refreshToken: 0,
+          __v: 0,
+          _id: 0
+        }
+      }
+    ]);
+  },
   findUsersByUserId: async (userId: string) => {
     return (await Users.aggregate([
       { $match: { userId: { $regex: userId, $options: 'i' } } },
