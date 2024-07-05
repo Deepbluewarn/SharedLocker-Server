@@ -51,31 +51,31 @@ passport.use('web-kakao', new KakaoStrategy({
   clientID: process.env.KAKAO_CLIENT_ID,
   clientSecret: process.env.KAKAO_CLIENT_SECRET,
   callbackURL: process.env.KAKAO_CALLBACK_URL
-}, kakaoCallback))
+}, oAuthCallback))
 
 passport.use('native-kakao', new KakaoStrategy({
   clientID: process.env.KAKAO_CLIENT_ID,
   clientSecret: process.env.KAKAO_CLIENT_SECRET,
   callbackURL: process.env.KAKAO_NATIVE_CALLBACK_URL
-}, kakaoCallback))
+}, oAuthCallback))
 
 passport.use('web-google', new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: process.env.GOOGLE_CALLBACK_URL
-}, kakaoCallback))
+}, oAuthCallback))
 
 passport.use('native-google', new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: process.env.GOOGLE_NATIVE_CALLBACK_URL
-}, kakaoCallback))
+}, oAuthCallback))
 
 passport.use('web-github', new GitHubStrategy({
   clientID: process.env.GITHUB_CLIENT_ID,
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
   callbackURL: process.env.GITHUB_CALLBACK_URL
-}, kakaoCallback))
+}, oAuthCallback))
 
 passport.use('logout',
   new JwtStrategy({
@@ -244,10 +244,22 @@ passport.use('token',
   })
 )
 
-function kakaoCallback(accessToken, refreshToken, profile, done) {
-  UserService._findUserByUserId(String(profile.id)).then((user) => {
+function oAuthCallback(accessToken, refreshToken, profile, done) {
+  let _user_id = profile.id
+  let _nickname = profile.displayName
+  let _email = null
+  const _provider = profile.provider
+
+  if (profile.provider === 'kakao') {
+    _email = null
+  } else {
+    _email = profile.emails[0].value
+  }
+
+  UserService._findUserByUserId(String(_user_id)).then((user) => {
     let _accessToken;
     let _refreshToken;
+
     if (user) {
       _accessToken = AuthService.generateToken(user as Express.User)
       _refreshToken = AuthService.generateRefreshToken(user as Express.User)
@@ -256,23 +268,21 @@ function kakaoCallback(accessToken, refreshToken, profile, done) {
       user.save()
 
       done(null, user, {
-        success: true, message: '카카오 로그인 성공', value: {
+        success: true, message: 'OAuth 로그인 성공', value: {
           accessToken: _accessToken,
           refreshToken: _refreshToken
         }
       })
     } else {
-      UserService.createOAuthUser(profile.id, profile.username).then((newUser) => {
+      UserService.createOAuthUser(_user_id, _nickname, _email, _provider).then((newUser) => {
         _accessToken = AuthService.generateToken(newUser as Express.User)
         _refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
 
         newUser.refreshToken = _refreshToken
         newUser.save()
-        newUser.refreshToken = _refreshToken
-        newUser.save()
 
         done(null, newUser, {
-          success: true, message: '카카오 회원가입 성공', value: {
+          success: true, message: 'OAuth 회원가입 성공', value: {
             accessToken: _accessToken,
             refreshToken: _refreshToken
           }

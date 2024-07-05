@@ -120,8 +120,8 @@ const UserService = {
 
     return await newUser.save()
   },
-  createOAuthUser: async (userId: string, nickname: string, email?: string) => {
-    const newUser = new Users({ userId, nickname, email })
+  createOAuthUser: async (userId: string, nickname: string, email: string | null, provider?: string) => {
+    const newUser = new Users({ userId, nickname, email, provider })
 
     return await newUser.save()
   },
