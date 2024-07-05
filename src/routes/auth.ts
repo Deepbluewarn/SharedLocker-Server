@@ -1,5 +1,5 @@
 import express from 'express'
-import { checkLockerAccess, getNewToken, getQrKey, getUser, googleLogin, googleLoginCallback, googleLoginNativeCallback, googleNativeLogin, kakaoLogin, kakaoLoginCallback, kakaoLoginNativeCallback, kakaoNativeLogin, loginUser, logoutUser, registerUser, resolveTokenByAuthorizationCode } from '../controller/auth.controller.js'
+import { checkLockerAccess, getNewToken, getQrKey, getUser, githubLogin, githubLoginCallback, googleLogin, googleLoginCallback, googleLoginNativeCallback, googleNativeLogin, kakaoLogin, kakaoLoginCallback, kakaoLoginNativeCallback, kakaoNativeLogin, loginUser, logoutUser, registerUser, resolveTokenByAuthorizationCode } from '../controller/auth.controller.js'
 import passport from 'passport'
 
 const router = express.Router()
@@ -14,6 +14,10 @@ router.get('/callback/kakao', kakaoLoginCallback)
 // 네이티브 앱 기반 카카오 로그인을 위한 라우터
 router.get('/native/kakao', kakaoNativeLogin)
 router.get('/callback/native/kakao', kakaoLoginNativeCallback)
+
+// Github (Web)
+router.get('/github', githubLogin)
+router.get('/callback/github', githubLoginCallback)
 
 router.get('/google', googleLogin)
 router.get('/callback/google', googleLoginCallback)

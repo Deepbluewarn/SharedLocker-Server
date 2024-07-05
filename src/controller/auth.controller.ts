@@ -99,6 +99,27 @@ export const kakaoLoginNativeCallback = async (req: Request, res: Response, next
   })(req, res, next)
 }
 
+export const githubLogin = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('web-github', { scope: [ 'user:email' ], prompt: 'login' })(req, res, next)
+}
+
+export const githubLoginCallback = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('web-github', {prompt: 'login'}, (err, user: IUser, info) => {
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+
+    setTokenCookie(res, process.env.REFRESH_TOKEN_COOKIE_NAME, info.value.refreshToken);
+    setTokenCookie(res, process.env.ACCESS_TOKEN_COOKIE_NAME, info.value.accessToken);
+
+    res.redirect('/')
+  })(req, res, next)
+}
+
 export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('web-google', {
     scope: [ 'profile', 'email' ],
