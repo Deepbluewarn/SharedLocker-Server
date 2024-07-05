@@ -1,5 +1,6 @@
 import passport from 'passport'
 import { Strategy as KakaoStrategy } from 'passport-kakao'
+import { Strategy as GitHubStrategy } from 'passport-github2'
 import { type Request } from 'express'
 import jwt, { type JwtPayload } from 'jsonwebtoken'
 import { Strategy as LocalStrategy } from 'passport-local'
@@ -55,6 +56,12 @@ passport.use('native-kakao', new KakaoStrategy({
   clientID: process.env.KAKAO_CLIENT_ID,
   clientSecret: process.env.KAKAO_CLIENT_SECRET,
   callbackURL: process.env.KAKAO_NATIVE_CALLBACK_URL
+}, kakaoCallback))
+
+passport.use('web-github', new GitHubStrategy({
+  clientID: process.env.GITHUB_CLIENT_ID,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET,
+  callbackURL: process.env.GITHUB_CALLBACK_URL
 }, kakaoCallback))
 
 passport.use('logout',
@@ -246,8 +253,8 @@ function kakaoCallback(accessToken, refreshToken, profile, done) {
         _accessToken = AuthService.generateToken(newUser as Express.User)
         _refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
 
-        user.refreshToken = _refreshToken
-        user.save()
+        newUser.refreshToken = _refreshToken
+        newUser.save()
 
         done(null, newUser, {
           success: true, message: '카카오 회원가입 성공', value: {
