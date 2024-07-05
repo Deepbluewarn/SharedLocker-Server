@@ -99,6 +99,59 @@ export const kakaoLoginNativeCallback = async (req: Request, res: Response, next
   })(req, res, next)
 }
 
+export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('web-google', {
+    scope: [ 'profile', 'email' ],
+    prompt: 'login'
+  }, (err, user, info) => {
+  })(req, res, next)
+}
+
+export const googleNativeLogin = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('native-google', {
+    scope: [ 'profile', 'email' ],
+    prompt: 'login'
+  }, (err, user, info) => {
+  })(req, res, next)
+}
+
+export const googleLoginCallback = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('web-google', {prompt: 'login'}, (err, user: IUser, info) => {
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+
+    setTokenCookie(res, process.env.REFRESH_TOKEN_COOKIE_NAME, info.value.refreshToken);
+    setTokenCookie(res, process.env.ACCESS_TOKEN_COOKIE_NAME, info.value.accessToken);
+
+    res.redirect('/')
+  })(req, res, next)
+}
+
+export const googleLoginNativeCallback = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('native-google', {prompt: 'login'}, async (err, user: IUser, info) => {
+    
+    console.log('googleLoginNativeCallback info: ', info)
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+    
+    const code = crypto.randomBytes(16).toString('hex')
+
+    await redisQRClient.set(code, JSON.stringify(info.value), 'EX', 30)
+    
+    res.redirect(`sharedlocker://welcome?code=${code}`)
+  })(req, res, next)
+}
+
 export const resolveTokenByAuthorizationCode = async (req: Request, res: Response, next: NextFunction) => {
   const code = req.body.code
 
