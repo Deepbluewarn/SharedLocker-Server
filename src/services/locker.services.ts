@@ -549,17 +549,10 @@ const cancelClaimedLocker = async (
   assigneeTo?: string,
 ) : Promise<IServiceMessage> => {
   const claimedLockers = await getUserLockerList(user_id)
-  const assigneeUser = await UserService._findUserByUserId(assigneeTo)
 
   if(claimedLockers.length === 0) {
     return { success: false, message: '보관함이 존재하지 않습니다.' }
   }
-
-  if (!assigneeUser) {
-    return { success: false, message: '양도받을 유저를 찾을 수 없습니다.'}
-  }
-
-  const assigneeUserId = new Types.ObjectId(assigneeUser._id)
 
   const locker: Locker = claimedLockers.find(
     locker =>
@@ -574,12 +567,17 @@ const cancelClaimedLocker = async (
     return { success: false, message: '조건에 맟는 보관함을 찾을 수 없습니다.' }
   }
 
-  const assigneeInSharedList = locker.sharedWith.some(user_id => {
-    return user_id.equals(assigneeUserId)
-  })
+  if (locker.sharedWith.length > 0) {
+    const assigneeUser = await UserService._findUserByUserId(assigneeTo)
+    const assigneeUserId = new Types.ObjectId(assigneeUser._id)
+    const assigneeInSharedList = locker.sharedWith.some(user_id => {
+      return user_id.equals(assigneeUserId)
+    })
 
-  if (locker.sharedWith.length > 0 && assigneeInSharedList) {
-    // 공유자가 있는데 양도인이 지정된 경우
+    if (!assigneeInSharedList) {
+      return { success: false, message: '양도하고자 하는 유저가 공유자 목록에 없습니다.', httpCode: 409 }
+    }
+
     $set = {
       'floors.$[i].lockers.$[j].claimedBy': assigneeUserId,
       'floors.$[i].lockers.$[j].status': 'Share_Available'
@@ -587,17 +585,11 @@ const cancelClaimedLocker = async (
     $pull = {
       'floors.$[i].lockers.$[j].sharedWith': assigneeUserId
     }
-  } else if (locker.sharedWith.length > 0 && !assigneeInSharedList) {
-    // 공유자가 있는데 양도인이 공유자 목록에 없는 경우
-    return { success: false, message: '양도하고자 하는 유저가 공유자 목록에 없습니다.', httpCode: 409 }
-  } else if (locker.sharedWith.length <= 0) {
-    // 공유자가 없는 경우
+  } else {
     $set = {
       'floors.$[i].lockers.$[j].claimedBy': null,
       'floors.$[i].lockers.$[j].status': 'Empty'
     }
-  } else {
-    return { success: false, message: '보관함을 취소하는데 실패했습니다.', httpCode: 400 }
   }
 
   await Lockers.findOneAndUpdate(
