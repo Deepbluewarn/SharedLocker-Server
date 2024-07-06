@@ -3,6 +3,7 @@ import Lockers, { Locker } from '../models/Lockers.js'
 import Users, { IUser } from '../models/Users.js'
 import { IServiceMessage } from '../interfaces/index.js'
 import adminServices from './admin.services.js'
+import UserService from './user.services.js'
 
 const USERS_MASK = {
   __v: 0,
@@ -540,39 +541,68 @@ const shareLocker = async (user_id: Types.ObjectId, buildingNumber: number, floo
   return { success: true, message: '보관함이 성공적으로 공유되었습니다.' }
 }
 
-const cancelClaimedLocker = async (user_id: Types.ObjectId, buildingNumber: string, floorNumber: number, lockerNumber: number) : Promise<IServiceMessage> => {
-  // 우선 소유중인 보관함인지 공유 받은 보관함인지 확인합니다.
-  // 그리고 해당 보관함을 찾아 claimedBy 필드를 null로 업데이트합니다.
-
+const cancelClaimedLocker = async (
+  user_id: Types.ObjectId, 
+  buildingNumber: string, 
+  floorNumber: number, 
+  lockerNumber: number,
+  assigneeTo?: string,
+) : Promise<IServiceMessage> => {
   const claimedLockers = await getUserLockerList(user_id)
+  const assigneeUser = await UserService._findUserByUserId(assigneeTo)
 
   if(claimedLockers.length === 0) {
     return { success: false, message: '보관함이 존재하지 않습니다.' }
   }
 
-  const locker = claimedLockers.find(
+  if (!assigneeUser) {
+    return { success: false, message: '양도받을 유저를 찾을 수 없습니다.'}
+  }
+
+  const assigneeUserId = new Types.ObjectId(assigneeUser._id)
+
+  const locker: Locker = claimedLockers.find(
     locker =>
       Number(locker.buildingNumber) === Number(buildingNumber) &&
             Number(locker.floorNumber) === Number(floorNumber) &&
             Number(locker.lockerNumber) === Number(lockerNumber)
   )
+  let $set = {}
+  let $pull = {}
 
   if (!locker) {
     return { success: false, message: '조건에 맟는 보관함을 찾을 수 없습니다.' }
   }
 
-  if (locker.sharedWith.length > 0) {
-    return { success: false, message: '공유된 보관함은 취소할 수 없습니다. 대신 소유권을 양도할 수 있습니다.', httpCode: 409}
+  const assigneeInSharedList = locker.sharedWith.some(user_id => {
+    return user_id.equals(assigneeUserId)
+  })
+
+  if (locker.sharedWith.length > 0 && assigneeInSharedList) {
+    // 공유자가 있는데 양도인이 지정된 경우
+    $set = {
+      'floors.$[i].lockers.$[j].claimedBy': assigneeUserId,
+      'floors.$[i].lockers.$[j].status': 'Share_Available'
+    }
+    $pull = {
+      'floors.$[i].lockers.$[j].sharedWith': assigneeUserId
+    }
+  } else if (locker.sharedWith.length > 0 && !assigneeInSharedList) {
+    // 공유자가 있는데 양도인이 공유자 목록에 없는 경우
+    return { success: false, message: '양도하고자 하는 유저가 공유자 목록에 없습니다.', httpCode: 409 }
+  } else if (locker.sharedWith.length <= 0) {
+    // 공유자가 없는 경우
+    $set = {
+      'floors.$[i].lockers.$[j].claimedBy': null,
+      'floors.$[i].lockers.$[j].status': 'Empty'
+    }
+  } else {
+    return { success: false, message: '보관함을 취소하는데 실패했습니다.', httpCode: 400 }
   }
 
   await Lockers.findOneAndUpdate(
     { buildingNumber: buildingNumber },
-    {
-      $set: {
-        'floors.$[i].lockers.$[j].claimedBy': null,
-        'floors.$[i].lockers.$[j].status': 'Empty'
-      }
-    },
+    { $set, $pull },
     {
       arrayFilters: [
         { 'i.floorNumber': floorNumber },

@@ -249,6 +249,7 @@ export const cancelLocker = (req: Request, res: Response, next: NextFunction) =>
     const floorNumber = req.body.floorNumber
     const lockerNumber = req.body.lockerNumber
     const isOwner = req.body.isOwner
+    const assigneeTo = req.body.assigneeTo
 
     if (err) {
       return res.status(400).json({ errors: err })
@@ -262,7 +263,7 @@ export const cancelLocker = (req: Request, res: Response, next: NextFunction) =>
       let locker_res = null;
 
       if (isOwner){
-        locker_res = await LockerService.cancelClaimedLocker(objectId, buildingNumber, floorNumber, lockerNumber)
+        locker_res = await LockerService.cancelClaimedLocker(objectId, buildingNumber, floorNumber, lockerNumber, assigneeTo)
       }else {
         locker_res = await LockerService.cancelSharedLocker(objectId, buildingNumber, floorNumber, lockerNumber)
       }
