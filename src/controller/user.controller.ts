@@ -58,7 +58,7 @@ export const updateUserRole = [
   async (req: Request, res: Response, next: NextFunction) => {
     const { userId, role, assignedLockerBuilding } = req.body
 
-    if(role === 'worker' && !assignedLockerBuilding) {
+    if (role === 'worker' && !assignedLockerBuilding) {
       return res.status(400).json({ success: false, message: '담당 보관함이 지정되지 않았습니다.' })
     }
 
@@ -71,3 +71,46 @@ export const updateUserRole = [
     }
   }
 ]
+
+// 회원이 직접 회원 탈퇴를 진행하는 API
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('logout', { session: false }, async (err, user: IUser, info) => {
+    if (err) {
+      return res.status(500).json(info)
+    }
+
+    if (!user) {
+      return res.status(401).json(info)
+    }
+
+    try {
+      await UserService.deleteUser(user.userId)
+
+      return res.status(200).json({ success: true, message: '회원 탈퇴 처리가 완료되었습니다.' })
+    } catch (error) {
+      return res.status(400).json({ success: false, message: error.message })
+    }
+  })(req, res, next)
+}
+
+export const deleteUserByAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('admin', { session: false }, async (err, user: IUser, info) => {
+    if (err) {
+      return res.status(500).json(info)
+    }
+
+    if (!user) {
+      return res.status(401).json(info)
+    }
+
+    const { userId } = req.body
+
+    try {
+      await UserService.deleteUser(userId)
+
+      return res.status(200).json({ success: true, message: '회원 삭제 처리가 완료되었습니다.' })
+    } catch (error) {
+      return res.status(400).json({ success: false, message: error.message })
+    }
+  })(req, res, next)
+}

@@ -1,11 +1,14 @@
 import express from 'express'
-import { checkLockerAccess, getNewToken, getQrKey, getUser, githubLogin, githubLoginCallback, googleLogin, googleLoginCallback, googleLoginNativeCallback, googleNativeLogin, kakaoLogin, kakaoLoginCallback, kakaoLoginNativeCallback, kakaoNativeLogin, loginUser, logoutUser, registerUser, resolveTokenByAuthorizationCode } from '../controller/auth.controller.js'
-import passport from 'passport'
+import { checkLockerAccess, getNewToken, getQrKey, githubLogin, githubLoginCallback, googleLogin, googleLoginCallback, googleLoginNativeCallback, googleNativeLogin, kakaoLogin, kakaoLoginCallback, kakaoLoginNativeCallback, kakaoNativeLogin, loginUser, logoutUser, registerUser, resolveTokenByAuthorizationCode } from '../controller/auth.controller.js'
+import { deleteUser, deleteUserByAdmin } from '../controller/user.controller.js'
 
 const router = express.Router()
 
 router.post('/register', registerUser)
 router.post('/login', loginUser)
+// 유저 삭제 전 로그아웃 처리 필요 (토큰 블랙리스트 작업)
+router.delete('/delete', deleteUser) // 회원 탈퇴
+router.delete('/user/delete', deleteUserByAdmin) // 관리자의 회원 삭제
 
 // 웹 기반 카카오 로그인을 위한 라우터
 router.get('/kakao', kakaoLogin)
