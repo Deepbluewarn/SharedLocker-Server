@@ -201,6 +201,14 @@ const UserService = {
     }
   },
 
+  updateUserNickname: async (userId: string, newNickname: string) => {
+    return await Users.findOneAndUpdate({ userId }, {
+      $set: {
+        nickname: newNickname
+      }
+    })
+  },
+
   checkAdminAvailable: async () => {
     return await Users.findOne({ userId: 'admin' })
   },

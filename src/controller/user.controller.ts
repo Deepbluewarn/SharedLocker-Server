@@ -72,6 +72,28 @@ export const updateUserRole = [
   }
 ]
 
+export const updateUserNickname = async (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('user', async (err, user: IUser, info) => {
+    if (err) {
+      return res.status(500).json(info)
+    }
+
+    if (!user) {
+      return res.status(401).json(info)
+    }
+
+    const newNickname = req.body.nickname
+
+    try {
+      await UserService.updateUserNickname(user.userId, newNickname)
+
+      return res.status(200).json({ success: true, message: '닉네임이 수정되었습니다.' })
+    } catch (error) {
+      return res.status(400).json({ success: false, message: error.message })
+    }
+  })(req, res, next)
+}
+
 // 회원이 직접 회원 탈퇴를 진행하는 API
 export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('logout', { session: false }, async (err, user: IUser, info) => {
