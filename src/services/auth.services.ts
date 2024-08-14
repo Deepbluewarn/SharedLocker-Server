@@ -10,26 +10,23 @@ const comparePassword = async (password: string, hash: string) => {
   return await bcrypt.compare(password, hash)
 }
 
-const generateToken = (user: Express.User) => {
+const generateTokens = (_id: string, userId: string, userEmail: string, userNickname: string) => {
   const token = jwt.sign(
-    { username: user.email, id: user.userId },
+    { _id, userId, userEmail, userNickname },
     process.env.JWT_SECRET,
     {
       expiresIn: process.env.JWT_EXPIRATION_TIME
     }
   )
-  return token
-}
-
-const generateRefreshToken = (user: Express.User) => {
   const refreshToken = jwt.sign(
-    { username: user.email, id: user.userId },
+    { _id, userId, userEmail, userNickname },
     process.env.JWT_SECRET,
     {
       expiresIn: process.env.JWT_REFRESH_EXPIRATION_TIME
     }
   )
-  return refreshToken
+
+  return { token, refreshToken }
 }
 
 const generateNewHashedPassword = async (password: string) => {
