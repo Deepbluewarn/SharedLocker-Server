@@ -86,7 +86,7 @@ passport.use('logout',
   }, (req: Request, jwt_payload, done) => {
     const accessTokenExtractor = ExtractJwt.fromAuthHeaderAsBearerToken();
 
-    UserService._findUserByUserId(jwt_payload.id).then((user) => {
+    UserService._findUserByUserId(jwt_payload.userId).then((user) => {
       if (!user) {
         done(null, false, { success: false, message: 'User not found' })
       } else {
@@ -149,7 +149,7 @@ passport.use('user',
 
     // 토큰의 정보를 기반으로 가입 여부 확인.
     // 토큰에 해당하는 유저가 있으면 해당 유저의 객체를 반환한다.
-    UserService.findUserByUserIdWithAdmin(jwt_payload.id).then((user) => {
+    UserService.findUserByUserIdWithAdmin(jwt_payload.userId).then((user) => {
       if (user) {
         done(null, user, { success: true, message: '', value: user })
       } else {
@@ -171,7 +171,7 @@ passport.use('admin', new JwtStrategy({
 }, (req: Request, jwt_payload: JwtPayload, done: VerifiedCallback) => {
   if (!jwt_payload) { done(null, false, { success: false, message: '권한 없음' }); return }
 
-  const user_promise = UserService._findUserByUserId(jwt_payload.id)
+  const user_promise = UserService._findUserByUserId(jwt_payload.userId)
 
   user_promise.then(user => {
     if (!user) {
@@ -195,8 +195,6 @@ passport.use('token',
     secretOrKey: process.env.JWT_SECRET,
     passReqToCallback: true
   }, async (req: Request, jwt_payload: JwtPayload, done: VerifiedCallback) => {
-    console.log('[passport refresh jwt_payload]: ', jwt_payload)
-
     const jwt_raw = refreshTokenExtractor(req)
     const checkBlackList = await AuthService.checkBlackList(jwt_raw)
 
@@ -210,7 +208,7 @@ passport.use('token',
     // DB 의 Refresh Token 과 유저의 RT 를 비교하여 유효성을 확인한다.
     // 만약 일치하면 jwt.verify() 로 유저의 rt 를 한번 더 검증한다.
 
-    UserService._findUserByUserId(jwt_payload.id).then(user => {
+    UserService._findUserByUserId(jwt_payload.userId).then(user => {
       // 공격자가 Token 을 탈취하여 유저의 AccessToken 을 발급받으면
       // DB 에는 공격자의 RefreshToken 이 저장된다.
       // 정상 유저가 클라이언트에 가지고 있던 RefreshToken 과 DB 의 RT 를 비교해야 한다.
