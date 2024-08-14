@@ -39,42 +39,33 @@ const revokeAccessToken = async (token: string) => {
   if (!token) return
   
   const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload
-  const user = await userServices._findUserByUserId(decoded.id)
-
-  if (!user) throw new Error('User not found')
 
   setBlackList(token, decoded.exp)
-
-  return user
 }
 
 const revokeRefreshToken = async (token?: string) => {
   if (!token) return
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload
-  const user = await userServices._findUserByUserId(decoded.id)
+  const user = await userServices._findUserByUserId(decoded.userId)
 
-  if (!user) throw new Error('User not found')
+  if (user) {
+    user.refreshToken = ''
+    user.save()
+  }
 
   setBlackList(token, decoded.exp)
-
-  user.refreshToken = ''
-  user.save()
 
   return user
 }
 
 const generateQrKey = async (userId: string): Promise<IQR> => {
-  console.log('[authService] generateQrKey userId: ', userId)
-
   // 8자리 랜덤 문자열 생성
   const key = Math.random().toString(36).substr(2, 8)
   // redis 에 위 문자열을 키 값으로 하는 유저 아이디와 유효기간으로 구성된 객체를 저장. 유효기간은 30초
   // redis 에 저장된 객체는 30초 후 자동으로 삭제됨\
   // 네트워크 지연 시간을 고려하여 4초 정도를 추가로 더해줌
-  await redisQRClient.set(key, userId, 'EX', Number(process.env.QR_EXPIRATION_TIME) + 4).then(res => {
-    console.log('[authService] generateQrKey redis res: ', res)
-  })
+  await redisQRClient.set(key, userId, 'EX', Number(process.env.QR_EXPIRATION_TIME) + 4)
 
   const createdAt = new Date().getTime();
   const expiredAt = new Date(createdAt + Number(process.env.QR_EXPIRATION_TIME) * 1000).getTime();
@@ -83,11 +74,8 @@ const generateQrKey = async (userId: string): Promise<IQR> => {
 }
 
 const getUserIdByQrKey = async (qrKey: string) => {
-  console.log('[authService] getUserIdByQrKey qrKey: ', qrKey)
-
   // redis 에서 qrKey 를 키 값으로 하는 유저 아이디를 가져옴
   const userId = await redisQRClient.get(qrKey)
-  console.log('[authService] getUserIdByQrKey userId: ', userId)
 
   return userId
 }
@@ -121,8 +109,7 @@ const getRoleList = async () => {
 
 export default {
   comparePassword,
-  generateToken,
-  generateRefreshToken,
+  generateTokens,
   generateNewHashedPassword,
   revokeAccessToken,
   revokeRefreshToken,
