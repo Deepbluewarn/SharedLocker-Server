@@ -5,6 +5,8 @@ import LockerService from '../services/locker.services.js'
 import { type NextFunction, type Request, type Response } from 'express'
 import UserService from '../services/user.services.js'
 import { checkUserRole } from '../middlewares/role.js'
+import { ExtractJwt } from 'passport-jwt'
+import authServices from '../services/auth.services.js'
 
 export const getUsersLocker = async (req, res, next) => {
   passport.authenticate('user', async (err, user: IUser, info) => {
@@ -96,7 +98,7 @@ export const updateUserNickname = async (req: Request, res: Response, next: Next
 
 // 회원이 직접 회원 탈퇴를 진행하는 API
 export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
-  passport.authenticate('logout', { session: false }, async (err, user: IUser, info) => {
+  passport.authenticate('user', { session: false }, async (err, user: IUser, info) => {
     if (err) {
       return res.status(500).json(info)
     }
@@ -108,8 +110,16 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
     try {
       await UserService.deleteUser(user.userId)
 
+      const accessTokenExtractor = ExtractJwt.fromAuthHeaderAsBearerToken();
+      const accessToken = accessTokenExtractor(req)
+      const refreshToken = user.refreshToken
+
+      authServices.revokeAccessToken(accessToken)
+      authServices.revokeRefreshToken(refreshToken)
+
       return res.status(200).json({ success: true, message: '회원 탈퇴 처리가 완료되었습니다.' })
     } catch (error) {
+      console.log(error)
       return res.status(400).json({ success: false, message: error.message })
     }
   })(req, res, next)
