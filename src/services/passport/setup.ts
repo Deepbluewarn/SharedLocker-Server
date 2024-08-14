@@ -246,7 +246,7 @@ passport.use('token',
   })
 )
 
-function oAuthCallback(accessToken, refreshToken, profile, done) {
+async function oAuthCallback(accessToken, refreshToken, profile, done) {
   let _user_id = profile.id
   let _nickname = profile.displayName
   let _email = null
@@ -258,38 +258,28 @@ function oAuthCallback(accessToken, refreshToken, profile, done) {
     _email = profile.emails[0].value
   }
 
-  UserService._findUserByUserId(String(_user_id)).then((user) => {
-    let _accessToken;
-    let _refreshToken;
+  // 만약 기존 유저가 있으면 
 
-    if (user) {
-      _accessToken = AuthService.generateToken(user as Express.User)
-      _refreshToken = AuthService.generateRefreshToken(user as Express.User)
+  let user = await UserService._findUserByUserId(String(_user_id))
+  let isRegister = false
 
-      user.refreshToken = _refreshToken
-      user.save()
+  if (!user) {
+    user = await UserService.createOAuthUser(_user_id, _nickname, _email, _provider)
+    isRegister = true
+  }
+  
+  const {
+    token: _accessToken,
+    refreshToken: _refreshToken
+  } = AuthService.generateTokens(user._id, user.userId, user.email, user.nickname)
 
-      done(null, user, {
-        success: true, message: 'OAuth 로그인 성공', value: {
-          accessToken: _accessToken,
-          refreshToken: _refreshToken
-        }
-      })
-    } else {
-      UserService.createOAuthUser(_user_id, _nickname, _email, _provider).then((newUser) => {
-        _accessToken = AuthService.generateToken(newUser as Express.User)
-        _refreshToken = AuthService.generateRefreshToken(newUser as Express.User)
+  user.refreshToken = _refreshToken
+  user.save()
 
-        newUser.refreshToken = _refreshToken
-        newUser.save()
-
-        done(null, newUser, {
-          success: true, message: 'OAuth 회원가입 성공', value: {
-            accessToken: _accessToken,
-            refreshToken: _refreshToken
-          }
-        })
-      })
+  done(null, user, {
+    success: true, message: isRegister ? 'OAuth 회원가입 성공' : 'OAuth 로그인 성공', value: {
+      accessToken: _accessToken,
+      refreshToken: _refreshToken
     }
   })
 }
