@@ -22,8 +22,9 @@ passport.use('login',
       } else {
         AuthService.comparePassword(password, user.password).then((isMatch) => {
           if (isMatch) {
-            const accessToken = AuthService.generateToken(user as Express.User)
-            const refreshToken = AuthService.generateRefreshToken(user as Express.User)
+            const {
+              token: accessToken, refreshToken
+            } = AuthService.generateTokens(user._id, user.userId, user.email, user.nickname)
 
             user.refreshToken = refreshToken
             user.save()
@@ -226,9 +227,12 @@ passport.use('token',
         done(null, false, { success: false, message: 'Refresh Token 이 일치하지 않습니다.' }); return
       }
 
-      const newAccessToken = AuthService.generateToken(user)
-      const newRefreshToken = AuthService.generateRefreshToken(user)
-      user.refreshToken = AuthService.generateRefreshToken(user)
+      const { 
+        token: newAccessToken, 
+        refreshToken: newRefreshToken
+      } = AuthService.generateTokens(user._id, user.userId, user.email, user.nickname)
+
+      user.refreshToken = newRefreshToken
 
       user.save()
 
