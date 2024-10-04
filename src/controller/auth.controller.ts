@@ -6,6 +6,7 @@ import LockerService from '../services/locker.services.js'
 import { Types } from 'mongoose'
 import { redisQRClient } from '../db/redis_init.js'
 import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
 
 // type tokenType = 'accessToken' | 'refreshToken'
 
@@ -229,7 +230,7 @@ export const getNewToken = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ errors: err })
     }
     if (!info.success) {
-      let message = '오류 발생!'
+      let message = info.message
 
       if (info instanceof Error) {
         message = info.message
@@ -254,8 +255,22 @@ export const getQrKey = async (req: Request, res: Response, next: NextFunction) 
       return res.status(400).json(info)
     }
 
+    const buildingNumber = Number(req.query.buildingNumber)
+    const floor = Number(req.query.floor)
+    const lockerNumber = Number(req.query.lockerNumber)
+
     const qrKey = await AuthService.generateQrKey(user._id)
-    res.status(200).json({ success: true, message: 'QR키 생성 완료', value: qrKey })
+
+    // 회원의 _id와 보관함 정보를 기반으로 JWT 생성
+
+    const token = jwt.sign(
+      { _id: user._id, buildingNumber, floor, lockerNumber },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRATION_TIME
+      }
+    )
+    res.status(200).json({ success: true, message: 'QR키 생성 완료', value: {qrKey, token} })
   })(req, res, next)
 }
 
