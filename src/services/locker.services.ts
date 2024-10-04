@@ -569,6 +569,9 @@ const cancelClaimedLocker = async (
 
   if (locker.sharedWith.length > 0) {
     const assigneeUser = await UserService._findUserByUserId(assigneeTo)
+
+    if(!assigneeUser) return { success: false, message: '양도자 정보를 찾을 수 없습니다.'}
+
     const assigneeUserId = new Types.ObjectId(assigneeUser._id)
     const assigneeInSharedList = locker.sharedWith.some(user_id => {
       return user_id.equals(assigneeUserId)
@@ -698,61 +701,60 @@ const checkLockerAccessByUserId = async (user_id: Types.ObjectId, buildingNumber
   if (targetLocker.length === 0) {
     return { success: false, message: '해당 보관함을 찾을 수 없습니다.' }
   }
-
-  // 관리자인지 확인.
-  const admin = await adminServices.findAdminWithAssignedLocker(user_id)
-
-  if (admin && admin.role === 'worker' && admin.assignedLocker.buildingNumber === buildingNumber) {
-    return {
-      success: true,
-      message: '[마스터 키] 보관함에 접근할 수 있습니다.',
-      value: {
-        buildingName: targetLocker[0].buildingName,
-        buildingNumber: Number(buildingNumber),
-        floorNumber: Number(floorNumber),
-        lockerNumber: Number(lockerNumber)
-      }
-    }
-  }
-
+  
   const claimedUser: IUser[] = targetLocker[0].claimedByUser
   const sharedUsers: IUser[] = targetLocker[0].sharedWithUsers
 
   const UserClaimed = claimedUser.find(user => user_id.equals(user._id));
   const UserInSharedUsers = sharedUsers.find(user => user_id.equals(user._id));
 
-  if (UserClaimed || UserInSharedUsers) {
-    const res = await Lockers.updateOne(
-      { buildingNumber: (buildingNumber) },
-      {
-        $push: {
-          'floors.$[i].lockers.$[j].accessHistory': {
-            userId: UserClaimed?.userId || UserInSharedUsers?.userId,
-            accessTime: new Date(),
-            accessType: UserClaimed ? 'owner' : 'shared'
-          }
-        }
-      },
-      {
-        arrayFilters: [
-          { 'i.floorNumber': (floorNumber) },
-          { 'j.lockerNumber': (lockerNumber) }
-        ]
-      }
-    )
+  let accessType = 'unauthorized'
+  let accessUserId = ''
+  let claimAccess = UserClaimed ? true : false
+  let sharedAccess = UserInSharedUsers ? true : false
+  let adminAccess = false
 
-    return {
-      success: true,
-      message: '보관함에 접근할 수 있습니다.',
-      value: {
-        buildingName: targetLocker[0].buildingName,
-        buildingNumber: Number(buildingNumber),
-        floorNumber: Number(floorNumber),
-        lockerNumber: Number(lockerNumber)
-      }
-    }
+  if (claimAccess || sharedAccess) {
+    // 일반 접근 권한이 있음.
+    accessUserId = UserClaimed?.userId || UserInSharedUsers?.userId
+    accessType = claimAccess ? 'owner' : sharedAccess ? 'shared' : 'others'
   } else {
-    return { success: false, message: '보관함에 접근할 수 없습니다.' }
+    // 일반 접근 권한이 없음. 관리자 권한이 있는지 확인.
+    const admin = await adminServices.findAdminWithAssignedLocker(user_id)
+    adminAccess = admin && admin.role === 'worker' && admin.assignedLocker.buildingNumber === buildingNumber
+    accessType = 'admin'
+  }
+
+  const access = (claimAccess || sharedAccess) || adminAccess
+
+  await Lockers.updateOne(
+    { buildingNumber: (buildingNumber) },
+    {
+      $push: {
+        'floors.$[i].lockers.$[j].accessHistory': {
+          userId: accessUserId,
+          accessTime: new Date(),
+          accessType
+        }
+      }
+    },
+    {
+      arrayFilters: [
+        { 'i.floorNumber': (floorNumber) },
+        { 'j.lockerNumber': (lockerNumber) }
+      ]
+    }
+  )
+
+  return {
+    success: access,
+    message: access ? '보관함에 접근할 수 있습니다.' : '보관함에 접근할 수 없습니다.',
+    value: {
+      buildingName: targetLocker[0].buildingName,
+      buildingNumber: Number(buildingNumber),
+      floorNumber: Number(floorNumber),
+      lockerNumber: Number(lockerNumber)
+    }
   }
 }
 
