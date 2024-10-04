@@ -37,13 +37,13 @@ passport.use('login',
               }
             )
           } else {
-            done(null, false, { success: false, message: 'Invalid id or password.' })
+            done(null, false, { success: false, message: '아이디 또는 비밀번호가 맞지 않습니다.' })
           }
         })
       }
     }).catch(err => {
       console.log(err)
-      done(null, false, { success: false, message: 'Something went wrong.' })
+      done(null, false, { success: false, message: '알 수 없는 오류가 발생하였습니다.' })
     })
   })
 )
