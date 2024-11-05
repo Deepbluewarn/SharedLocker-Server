@@ -5,6 +5,7 @@ import { Types } from 'mongoose'
 import { type IUser } from '../models/Users.js'
 import { checkUserRole } from '../middlewares/role.js'
 import lockerServices from '../services/locker.services.js'
+import OpenAI from 'openai'
 
 export const getAllBuildingList = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -306,3 +307,76 @@ export const deleteLocker = [
     res.status(200).json(del)
   }
 ]
+
+export const analyzeLockerPicture = async (req: Request, res: Response, next: NextFunction) => {
+  const { 
+    imageUrl, prompt, mock, 
+    buildingNumber, floorNumber, lockerNumber
+  } = req.body;
+
+  const mockItemList = ['연필', '가방', '책', '노트북'];
+  const default_prompt = `이미지에 대한 간단한 분석을 부탁해`
+  const openai = new OpenAI();
+
+  if (!imageUrl || !buildingNumber || isNaN(Number(floorNumber)) || isNaN(Number(lockerNumber))) {
+    res.status(400).json({ success: false, message: 'Invalid query parameters' });
+    return;
+  }
+
+  if (mock) {
+    res.status(200).json({
+      success: true,
+      message: '이미지 분석 결과를 배열로 반환합니다.',
+      value: mockItemList,
+    })
+  }
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: prompt ?? default_prompt },
+          {
+            type: "image_url",
+            image_url: {
+              "url": imageUrl,
+            },
+          },
+        ],
+      },
+    ],
+  });
+  try {
+    const items = JSON.parse(response.choices[0].message.content);
+    await lockerServices.setStoredItems(buildingNumber, floorNumber, lockerNumber, items)
+
+    res.status(200).json({
+      success: true,
+      message: '이미지 분석 결과를 배열로 반환합니다.',
+      value: items,
+    })
+  } catch(err) {
+    res.status(400).json({
+      success: true,
+      message: '이미지 분석 실패.'
+    })
+  }
+}
+
+export const getStoredItems = async (req: Request, res: Response, next: NextFunction) => {
+  const { buildingNumber, floorNumber, lockerNumber } = req.query;
+
+  if (!buildingNumber || isNaN(Number(floorNumber)) || isNaN(Number(lockerNumber))) {
+    res.status(400).json({ success: false, message: 'Invalid query parameters' });
+    return;
+  }
+
+  try {
+    const contents = await lockerServices.getStoredItems(Number(buildingNumber), Number(floorNumber), Number(lockerNumber));
+    res.status(200).json({ success: true, message: '보관함에 보관중인 물품 목록입니다.', value: contents });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to retrieve locker contents' });
+  }
+};

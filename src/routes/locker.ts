@@ -1,5 +1,6 @@
-import { cancelLocker, claimLocker, createLocker, deleteLocker, getAllBuildingList, getAllFloorByBuildingNumber, getAllLockerList, getLockerDetail, getLockerList, getLockerStructure, requestLockerShare, shareLocker } from '../controller/locker.controller.js'
+import { analyzeLockerPicture, cancelLocker, claimLocker, createLocker, deleteLocker, getAllBuildingList, getAllFloorByBuildingNumber, getAllLockerList, getLockerDetail, getLockerList, getLockerStructure, getStoredItems, requestLockerShare, shareLocker } from '../controller/locker.controller.js'
 import express from 'express'
+import { authenticateApiKey } from '../middlewares/auth.js'
 
 const lockerRouter = express.Router()
 
@@ -17,5 +18,9 @@ lockerRouter.post('/locker/share', shareLocker)
 lockerRouter.post('/locker/request-share', requestLockerShare)
 lockerRouter.post('/locker/cancel', cancelLocker)
 lockerRouter.delete('/locker', deleteLocker)
+
+// 보관 물품 이미지 인식
+lockerRouter.post('/locker/analyze', authenticateApiKey, analyzeLockerPicture);
+lockerRouter.get('/locker/items', getStoredItems);
 
 export default lockerRouter

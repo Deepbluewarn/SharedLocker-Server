@@ -433,6 +433,7 @@ const createLocker = async (buildingNumber: number, floorNumber: number, lockerN
     sharedWith: [],
     shareRequested: [],
     status: 'Empty',
+    items: [],
     accessHistory: []
   }
 
@@ -779,6 +780,50 @@ const deleteLocker = async (buildingNumber: number, floorNumber: number, lockerN
   return { success: true, message: '보관함이 성공적으로 삭제되었습니다.', value: { buildingNumber, floorNumber, lockerNumber  }}
 }
 
+const getStoredItems = async (buildingNumber: number, floorNumber: number, lockerNumber: number) => {
+  interface IItemsResult {
+    items: string[];
+  }
+  try {
+    const result = await Lockers.aggregate<IItemsResult>([
+      { $match: { buildingNumber } },
+      { $unwind: '$floors' },
+      { $match: { 'floors.floorNumber': floorNumber } },
+      { $unwind: '$floors.lockers' },
+      { $match: { 'floors.lockers.lockerNumber': lockerNumber } },
+      { $project: { items: '$floors.lockers.items', _id: 0 } }
+    ]);
+    return result[0].items; // 보관함에 보관된 물품 목록을 반환합니다.
+  } catch (error) {
+    throw new Error(`Failed to retrieve stored items: ${error.message}`);
+  }
+};
+
+const setStoredItems = async (
+  buildingNumber: number, floorNumber: number, lockerNumber: number,
+  items: string[],
+) => {
+  try {
+
+    await Lockers.findOneAndUpdate(
+      { buildingNumber: buildingNumber },
+      {
+        $set: {
+          'floors.$[i].lockers.$[j].items': items
+        }
+      },
+      {
+        arrayFilters: [
+          { 'i.floorNumber': floorNumber },
+          { 'j.lockerNumber': lockerNumber }
+        ]
+      }
+    )
+  } catch(err) {
+    throw new Error(`Failed to save stored items: ${err.message}`);
+  }
+}
+
 export default {
   getAllBuildingList,
   getAllFloorListByBuildingNumber,
@@ -796,5 +841,7 @@ export default {
   cancelSharedLocker,
   requestLockerShare,
   checkLockerAccessByUserId,
-  deleteLocker
+  deleteLocker,
+  getStoredItems,
+  setStoredItems,
 }
