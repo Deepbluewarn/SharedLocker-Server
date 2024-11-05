@@ -10,6 +10,8 @@ import userRouter from './routes/user.js'
 import adminRouter from './routes/admin.js'
 import './mqtt/index.js'
 import cors from 'cors'
+import logger from './logger.js'
+import PinoHttp from 'pino-http'
 
 dotenv.config()
 
@@ -27,6 +29,7 @@ mongoose
     console.log(err)
   })
 
+app.use(PinoHttp({logger: logger}))
 app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
@@ -43,4 +46,5 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server listening on port: ${port}`)
+  logger.info(`Server listening on port: ${port}`)
 })
