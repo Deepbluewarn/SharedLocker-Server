@@ -331,24 +331,25 @@ export const analyzeLockerPicture = async (req: Request, res: Response, next: Ne
     })
   }
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: prompt ?? default_prompt },
-          {
-            type: "image_url",
-            image_url: {
-              "url": imageUrl,
-            },
-          },
-        ],
-      },
-    ],
-  });
+  
   try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt ?? default_prompt },
+            {
+              type: "image_url",
+              image_url: {
+                "url": imageUrl,
+              },
+            },
+          ],
+        },
+      ],
+    });
     const items = JSON.parse(response.choices[0].message.content);
     await lockerServices.setStoredItems(buildingNumber, floorNumber, lockerNumber, items)
 
