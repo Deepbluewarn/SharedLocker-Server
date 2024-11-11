@@ -81,8 +81,12 @@ const getLockerList = async (buildingNumber: number, floorNumber: number) => {
     { $unwind: '$floors' }, // 배열인 floors 필드를 풀어줌
     { $match: { 'floors.floorNumber': Number(floorNumber) } }, // 특정 층에 해당하는 문서 선택
     { $unwind: '$floors.lockers' }, // 배열인 lockers 필드를 풀어줌
-    { $group: { _id: '$floors.lockers.lockerNumber', status: {$first: '$floors.lockers.status'} }}, // lockerNumber로 그룹화
-    { $project: { _id: 0, lockerNumber: '$_id', status: 1} } // _id 필드 제거 및 필드 이름 변경
+    { $group: { 
+      _id: '$floors.lockers.lockerNumber', 
+      status: {$first: '$floors.lockers.status'}, 
+      items: {$first: '$floors.lockers.items'} }
+    },
+    { $project: { _id: 0, lockerNumber: '$_id', status: 1, items: 1} } // _id 필드 제거 및 필드 이름 변경
   ])
 
   return lockerList;
