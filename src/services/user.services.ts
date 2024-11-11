@@ -214,47 +214,33 @@ const UserService = {
   },
 
   deleteUser: async (userId: string) => {
-    console.log('deleteUser userId: ', userId)
-    const session = await mongoose.startSession()
-
     const targetUser = await Users.findOne({ userId })
     const claimed = await Lockers.findOne({ 'floors.lockers.claimedBy': targetUser._id })
 
     if (claimed) throw Error('회원이 소유중인 보관함이 있습니다. 먼저 보관함을 취소하세요.')
 
-    try {
-      session.startTransaction()
-
-      await Users.deleteOne({ userId }, { session })
-      await Lockers.updateMany(
-        { 
-          $or: [
-            { 'floors.lockers.sharedWith': targetUser._id },
-            { 'floors.lockers.shareRequested': targetUser._id }
-          ]
+    await Users.deleteOne({ userId })
+    await Lockers.updateMany(
+      {
+        $or: [
+          { 'floors.lockers.sharedWith': targetUser._id },
+          { 'floors.lockers.shareRequested': targetUser._id }
+        ]
+      },
+      {
+        $pull: {
+          'floors.$[].lockers.$[locker1].sharedWith': targetUser._id,
+          'floors.$[].lockers.$[locker2].shareRequested': targetUser._id
         },
-        { 
-          $pull: {
-            'floors.$[].lockers.$[locker1].sharedWith': targetUser._id,
-            'floors.$[].lockers.$[locker2].shareRequested': targetUser._id
-          },
-        },
-        {
-          arrayFilters: [
-            { 'locker1.sharedWith': targetUser._id },
-            { 'locker2.shareRequested': targetUser._id }
-          ]
-        }
-      )
-      await Admins.deleteOne({ userId: targetUser._id })
-
-      await session.commitTransaction()
-    } catch(err) {
-      await session.abortTransaction()
-      throw err
-    } finally {
-      session.endSession()
-    }
+      },
+      {
+        arrayFilters: [
+          { 'locker1.sharedWith': targetUser._id },
+          { 'locker2.shareRequested': targetUser._id }
+        ]
+      }
+    )
+    await Admins.deleteOne({ userId: targetUser._id })
   }
 }
 
