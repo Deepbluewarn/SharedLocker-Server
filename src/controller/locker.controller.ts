@@ -351,7 +351,7 @@ export const analyzeLockerPicture = async (req: Request, res: Response, next: Ne
       ],
     });
     const items = JSON.parse(response.choices[0].message.content);
-    await lockerServices.setStoredItems(buildingNumber, floorNumber, lockerNumber, items)
+    await lockerServices.setStoredItems(buildingNumber, floorNumber, lockerNumber, items, imageUrl);
 
     res.status(200).json({
       success: true,

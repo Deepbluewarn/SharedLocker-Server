@@ -15,6 +15,7 @@ export interface Locker {
   shareRequested: Types.ObjectId[]
   status: 'Empty' | 'Share_Available' | 'Unavailable' | 'Maintenance',
   items: string[],
+  imageUrl?: string, // 보관함 내부 사진
   accessHistory: LockerAccess[]
 }
 
@@ -92,6 +93,9 @@ const LockerSchema = new mongoose.Schema({
           items: {
             type: [String],
             default: []
+          },
+          imageUrl: {
+            type: String,
           },
           accessHistory: {
             type: [LockerAccessSchema],
