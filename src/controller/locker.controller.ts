@@ -381,3 +381,25 @@ export const getStoredItems = async (req: Request, res: Response, next: NextFunc
     res.status(500).json({ success: false, message: 'Failed to retrieve locker contents' });
   }
 };
+
+export const searchLockerByItem = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('user', async (err, user: IUser, info) => {
+    const query = req.query.query as string;
+
+    if (err) {
+      return res.status(400).json({ errors: err })
+    }
+
+    if (!info.success) {
+      return res.status(400).json(info)
+    }
+
+    try {
+      const lockerListRes = await LockerService.queryLockerByItem(query)
+
+      res.status(200).json({ success: true, message: `"${query}" 검색 결과입니다.`, value: lockerListRes})
+    } catch (err) {
+      res.status(400).json(err)
+    }
+  })(req, res, next)
+}

@@ -84,6 +84,9 @@ const getLockerList = async (buildingNumber: number, floorNumber: number) => {
     {
       $project: {
         _id: 0,
+        buildingName: 1,
+        buildingNumber: 1,
+        floorNumber: '$floors.floorNumber',
         lockerNumber: '$floors.lockers.lockerNumber',
         status: '$floors.lockers.status',
         items: '$floors.lockers.items',
@@ -832,6 +835,29 @@ const setStoredItems = async (
   }
 }
 
+const queryLockerByItem = async (query: string) => {
+  try {
+    return await Lockers.aggregate([
+      { $unwind: '$floors' }, // floors 배열을 풀어줌
+      { $unwind: '$floors.lockers' }, // lockers 배열을 풀어줌
+      { $match: { 'floors.lockers.items': { $elemMatch: { $regex: query, $options: 'i' } } } }, // items 배열에 query가 포함되는지 확인
+      {
+        $project: {
+          _id: 0,
+          buildingName: 1,
+          floorNumber: '$floors.floorNumber',
+          lockerNumber: '$floors.lockers.lockerNumber',
+          status: '$floors.lockers.status',
+          items: '$floors.lockers.items',
+          imageUrl: '$floors.lockers.imageUrl',
+        }
+      }
+    ])
+  } catch (err) {
+    throw new Error(`Failed to search lockers: ${err.message}`);
+  }
+}
+
 export default {
   getAllBuildingList,
   getAllFloorListByBuildingNumber,
@@ -852,4 +878,5 @@ export default {
   deleteLocker,
   getStoredItems,
   setStoredItems,
+  queryLockerByItem,
 }

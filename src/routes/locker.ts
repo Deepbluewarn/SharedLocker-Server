@@ -1,4 +1,4 @@
-import { analyzeLockerPicture, cancelLocker, claimLocker, createLocker, deleteLocker, getAllBuildingList, getAllFloorByBuildingNumber, getAllLockerList, getLockerDetail, getLockerList, getLockerStructure, getStoredItems, requestLockerShare, shareLocker } from '../controller/locker.controller.js'
+import { analyzeLockerPicture, cancelLocker, claimLocker, createLocker, deleteLocker, getAllBuildingList, getAllFloorByBuildingNumber, getAllLockerList, getLockerDetail, getLockerList, getLockerStructure, getStoredItems, requestLockerShare, searchLockerByItem, shareLocker } from '../controller/locker.controller.js'
 import express from 'express'
 import { authenticateApiKey } from '../middlewares/auth.js'
 
@@ -22,5 +22,8 @@ lockerRouter.delete('/locker', deleteLocker)
 // 보관 물품 이미지 인식
 lockerRouter.post('/locker/analyze', authenticateApiKey, analyzeLockerPicture);
 lockerRouter.get('/locker/items', getStoredItems);
+
+// 검색
+lockerRouter.get('/locker/search/item', searchLockerByItem);
 
 export default lockerRouter
